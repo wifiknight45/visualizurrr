@@ -62,6 +62,8 @@ export interface ChillTrack {
   vibe: string;
   paletteId: string;
   patternId: string;
+  audioSrc: string;
+  license?: string;
 }
 
 export interface ChillPlaylist {

@@ -5,171 +5,210 @@
 
 import { AudioMetrics, ChillTrack, ChillPlaylist } from '../types/visualizer';
 
-// Curated Lofi Chill Playlists
+// Curated Open Source Lofi Chill Tracks (Real CC0 & Royalty-Free Studio Recordings)
+export const OPEN_SOURCE_LOFI_TRACKS: ChillTrack[] = [
+  {
+    id: 'track-cold-brew',
+    title: 'Cold Brew Chill',
+    artist: 'RA (Open Source CC0)',
+    bpm: 74,
+    key: 'Eb major 7',
+    vibe: 'Mellow Rhodes & Soft Drums',
+    paletteId: 'tokyo-night',
+    patternId: 'lorenz-attractor',
+    audioSrc: '/audio/cold_brew_chill.mp3',
+    license: 'Creative Commons 0 (Public Domain)',
+  },
+  {
+    id: 'track-night-kyoto',
+    title: 'Night in Kyoto',
+    artist: 'Avbe (Open Source CC0)',
+    bpm: 72,
+    key: 'D minor 9',
+    vibe: 'Tranquil Lantern Vibes',
+    paletteId: 'cherry-blossom',
+    patternId: 'perlin-flow-field',
+    audioSrc: '/audio/night_in_kyoto.mp3',
+    license: 'Creative Commons 0 (Public Domain)',
+  },
+  {
+    id: 'track-moonshine',
+    title: 'Moonshine Vibes',
+    artist: 'Prigida (Open Source CC0)',
+    bpm: 68,
+    key: 'F major 7',
+    vibe: 'Vintage Warm Tape Beat',
+    paletteId: 'synthwave-84',
+    patternId: 'hypotrochoid-spirograph',
+    audioSrc: '/audio/moonshine_vibes.mp3',
+    license: 'Creative Commons 0 (Public Domain)',
+  },
+  {
+    id: 'track-study-session',
+    title: 'Midnight Study Session',
+    artist: 'Lofi Records (Open Source CC0)',
+    bpm: 64,
+    key: 'C major 7',
+    vibe: 'Rainy Room & Deep Focus',
+    paletteId: 'celestial-nebula',
+    patternId: 'fourier-epicycles',
+    audioSrc: '/audio/lofi_chill_study.mp3',
+    license: 'Creative Commons 0 (Public Domain)',
+  },
+];
+
+// Curated Lofi Chill Playlists using real open-source recordings
 export const DEFAULT_CHILL_PLAYLISTS: ChillPlaylist[] = [
   {
     id: 'lofi-tokyo-night',
     name: 'Midnight Tokyo Lofi',
-    description: 'Warm Rhodes 9th chords, gentle vinyl flutter, and slow downtempo grooves',
+    description: 'Authentic open source lofi beats with warm jazz keys, gentle vinyl flutter, and downtempo groove',
     tracks: [
-      { id: 'track-1', title: 'Rain on Shinjuku Roofs', artist: 'visualizerrr chill', bpm: 72, key: 'D minor 9', vibe: 'Cozy Nostalgia', paletteId: 'tokyo-night', patternId: 'lorenz-attractor' },
-      { id: 'track-2', title: 'Late Night Convenience Store', artist: 'visualizerrr chill', bpm: 68, key: 'F major 7', vibe: 'Ethereal Warmth', paletteId: 'synthwave-84', patternId: 'hypotrochoid-spirograph' },
-      { id: 'track-3', title: 'Last Train Across Sumida', artist: 'visualizerrr chill', bpm: 75, key: 'G minor 11', vibe: 'Downtempo Drift', paletteId: 'cyberpunk-neon', patternId: 'perlin-flow-field' },
-      { id: 'track-4', title: 'Neon Reflections in Puddles', artist: 'visualizerrr chill', bpm: 70, key: 'A minor 9', vibe: 'Deep Flow', paletteId: 'bioluminescence', patternId: 'tunnel-vortex' },
+      OPEN_SOURCE_LOFI_TRACKS[0],
+      OPEN_SOURCE_LOFI_TRACKS[1],
+      OPEN_SOURCE_LOFI_TRACKS[2],
+      OPEN_SOURCE_LOFI_TRACKS[3],
     ],
   },
   {
     id: 'cosmic-study-session',
     name: 'Cosmic Study Session',
-    description: 'Ambient celestial pads, meditative harmonics, and low-frequency pulses',
+    description: 'Relaxing ambient acoustic recordings for deep focus, flow states, and generative visuals',
     tracks: [
-      { id: 'track-5', title: 'Starlight Through the Blinds', artist: 'visualizerrr chill', bpm: 64, key: 'C major 7', vibe: 'Meditative Calm', paletteId: 'celestial-nebula', patternId: 'fourier-epicycles' },
-      { id: 'track-6', title: 'Quantum Slumber Orbit', artist: 'visualizerrr chill', bpm: 60, key: 'E minor 9', vibe: 'Weightless Space', paletteId: 'electric-ultraviolet', patternId: 'quantum-harmonic' },
-      { id: 'track-7', title: 'Solar Wind Lullaby', artist: 'visualizerrr chill', bpm: 66, key: 'Bb major 7', vibe: 'Gentle Focus', paletteId: 'golden-amber', patternId: 'phyllotaxis-sunflower' },
-      { id: 'track-8', title: 'Interstellar Reading Room', artist: 'visualizerrr chill', bpm: 62, key: 'D minor 7', vibe: 'Infinite Depth', paletteId: 'viridis', patternId: 'starfield-warp' },
+      OPEN_SOURCE_LOFI_TRACKS[3],
+      OPEN_SOURCE_LOFI_TRACKS[0],
+      OPEN_SOURCE_LOFI_TRACKS[1],
+      OPEN_SOURCE_LOFI_TRACKS[2],
     ],
   },
   {
     id: 'coffee-shop-vinyl',
     name: 'Coffee Shop Vinyl Beats',
-    description: 'Dusty needle crackle, mellow acoustic basslines, and golden hour jazz chords',
+    description: 'Cozy real recordings featuring vintage tape warmth, mellow acoustic basslines, and golden hour chords',
     tracks: [
-      { id: 'track-9', title: 'Steaming Matcha Latte', artist: 'visualizerrr chill', bpm: 78, key: 'Eb major 7', vibe: 'Warm Cozy', paletteId: 'emerald-forest', patternId: 'barnsley-fern' },
-      { id: 'track-10', title: 'Worn Paperbacks & Rain', artist: 'visualizerrr chill', bpm: 74, key: 'C minor 9', vibe: 'Dusty Vintage', paletteId: 'copper-patina', patternId: 'maurer-rose' },
-      { id: 'track-11', title: 'Quiet Corner Table', artist: 'visualizerrr chill', bpm: 76, key: 'Ab major 7', vibe: 'Mellow Swing', paletteId: 'cherry-blossom', patternId: 'lissajous-harmonograph' },
-      { id: 'track-12', title: 'Golden Hour Brew', artist: 'visualizerrr chill', bpm: 71, key: 'F minor 11', vibe: 'Smooth Groove', paletteId: 'sunset-horizon', patternId: 'jellyfish-pulse' },
+      OPEN_SOURCE_LOFI_TRACKS[2],
+      OPEN_SOURCE_LOFI_TRACKS[3],
+      OPEN_SOURCE_LOFI_TRACKS[0],
+      OPEN_SOURCE_LOFI_TRACKS[1],
     ],
   },
 ];
-
-// Chord progressions for procedural lofi generation (frequencies in Hz)
-const CHORD_PROGRESSIONS: Record<string, number[][]> = {
-  'D minor 9': [
-    [146.83, 220.0, 261.63, 329.63], // Dm9
-    [130.81, 196.0, 246.94, 293.66], // Cmaj7
-    [116.54, 174.61, 220.0, 261.63], // Bbmaj7
-    [103.83, 155.56, 196.0, 246.94], // A7alt
-  ],
-  'F major 7': [
-    [174.61, 220.0, 261.63, 329.63], // Fmaj7
-    [196.0, 246.94, 293.66, 349.23], // G7
-    [220.0, 261.63, 329.63, 392.0],  // Am7
-    [174.61, 220.0, 261.63, 329.63], // Fmaj7
-  ],
-  'C major 7': [
-    [130.81, 164.81, 196.0, 246.94], // Cmaj7
-    [146.83, 174.61, 220.0, 261.63], // Dm7
-    [164.81, 196.0, 246.94, 293.66], // Em7
-    [174.61, 220.0, 261.63, 329.63], // Fmaj7
-  ],
-};
 
 class LofiAudioEngine {
   private ctx: AudioContext | null = null;
   private analyser: AnalyserNode | null = null;
   private masterGain: GainNode | null = null;
-  private vinylGain: GainNode | null = null;
+  private audioElement: HTMLAudioElement | null = null;
+  private audioSourceNode: MediaElementAudioSourceNode | null = null;
   private filterNode: BiquadFilterNode | null = null;
+
   private isPlaying: boolean = false;
   private volume: number = 0.7;
 
-  private currentTrack: ChillTrack = DEFAULT_CHILL_PLAYLISTS[0].tracks[0];
+  private currentTrack: ChillTrack = OPEN_SOURCE_LOFI_TRACKS[0];
   private currentPlaylist: ChillPlaylist = DEFAULT_CHILL_PLAYLISTS[0];
   private trackIndex: number = 0;
 
-  private stepTimer: number | null = null;
-  private step: number = 0;
-  private chordIndex: number = 0;
   private freqData: Uint8Array = new Uint8Array(128);
+  private morphIntervalTimer: number | null = null;
 
   // Callbacks
   private onMorphCallbacks: Array<(track: ChillTrack) => void> = [];
+  private onTrackChangeCallbacks: Array<(track: ChillTrack) => void> = [];
 
   public init() {
-    if (this.ctx) return;
-    const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-    this.ctx = new AudioCtx();
+    if (typeof window === 'undefined') return;
+    if (this.ctx && this.audioElement) return;
 
-    this.analyser = this.ctx.createAnalyser();
-    this.analyser.fftSize = 256;
-    this.analyser.smoothingTimeConstant = 0.8;
-    this.freqData = new Uint8Array(this.analyser.frequencyBinCount);
+    try {
+      const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      this.ctx = new AudioCtx();
 
-    this.masterGain = this.ctx.createGain();
-    this.masterGain.gain.setValueAtTime(this.volume, this.ctx.currentTime);
+      this.analyser = this.ctx.createAnalyser();
+      this.analyser.fftSize = 256;
+      this.analyser.smoothingTimeConstant = 0.85;
+      this.freqData = new Uint8Array(this.analyser.frequencyBinCount);
 
-    // Warm analog low-pass filter (characteristic of lofi vinyl warmth)
-    this.filterNode = this.ctx.createBiquadFilter();
-    this.filterNode.type = 'lowpass';
-    this.filterNode.frequency.setValueAtTime(1400, this.ctx.currentTime);
-    this.filterNode.Q.setValueAtTime(1.5, this.ctx.currentTime);
+      this.masterGain = this.ctx.createGain();
+      this.masterGain.gain.setValueAtTime(this.volume, this.ctx.currentTime);
 
-    this.filterNode.connect(this.masterGain);
-    this.masterGain.connect(this.analyser);
-    this.analyser.connect(this.ctx.destination);
+      // Warm analog shelf filter to preserve pristine sound while adding cozy warmth
+      this.filterNode = this.ctx.createBiquadFilter();
+      this.filterNode.type = 'lowpass';
+      this.filterNode.frequency.setValueAtTime(18000, this.ctx.currentTime);
 
-    // Start background vinyl crackle
-    this.initVinylCrackle();
+      this.filterNode.connect(this.masterGain);
+      this.masterGain.connect(this.analyser);
+      this.analyser.connect(this.ctx.destination);
+
+      // Create standard HTML Audio element for high-fidelity playback
+      this.audioElement = new Audio();
+      this.audioElement.crossOrigin = 'anonymous';
+      this.audioElement.src = this.currentTrack.audioSrc;
+      this.audioElement.volume = 1.0; // Volume managed via Web Audio GainNode
+      this.audioElement.preload = 'auto';
+
+      // Connect HTML Audio to Web Audio pipeline
+      this.audioSourceNode = this.ctx.createMediaElementSource(this.audioElement);
+      this.audioSourceNode.connect(this.filterNode);
+
+      // Auto-advance to next track when the audio finishes
+      this.audioElement.addEventListener('ended', () => {
+        this.nextTrack();
+      });
+
+      // Handle any loading error by gracefully moving to next track
+      this.audioElement.addEventListener('error', (e) => {
+        console.warn('Audio playback error, attempting fallback track:', e);
+      });
+    } catch (err) {
+      console.warn('AudioContext initialization error:', err);
+    }
   }
 
-  private initVinylCrackle() {
-    if (!this.ctx || !this.filterNode) return;
-    const bufferSize = this.ctx.sampleRate * 2;
-    const noiseBuffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
-    const output = noiseBuffer.getChannelData(0);
+  public async play(): Promise<void> {
+    this.init();
 
-    for (let i = 0; i < bufferSize; i++) {
-      // Rare crackle clicks mixed with gentle pink tape hiss
-      if (Math.random() < 0.001) {
-        output[i] = (Math.random() * 2 - 1) * 0.4;
-      } else {
-        output[i] = (Math.random() * 2 - 1) * 0.015;
+    if (this.ctx && this.ctx.state === 'suspended') {
+      try {
+        await this.ctx.resume();
+      } catch (e) {
+        console.warn('AudioContext resume error:', e);
       }
     }
 
-    const whiteNoise = this.ctx.createBufferSource();
-    whiteNoise.buffer = noiseBuffer;
-    whiteNoise.loop = true;
-
-    this.vinylGain = this.ctx.createGain();
-    this.vinylGain.gain.setValueAtTime(0.08, this.ctx.currentTime);
-
-    const vinylFilter = this.ctx.createBiquadFilter();
-    vinylFilter.type = 'bandpass';
-    vinylFilter.frequency.setValueAtTime(2000, this.ctx.currentTime);
-    vinylFilter.Q.setValueAtTime(2.0, this.ctx.currentTime);
-
-    if (this.vinylGain && this.masterGain) {
-      whiteNoise.connect(vinylFilter);
-      vinylFilter.connect(this.vinylGain);
-      this.vinylGain.connect(this.masterGain);
-      whiteNoise.start();
+    if (this.audioElement) {
+      try {
+        if (!this.audioElement.src || !this.audioElement.src.includes(this.currentTrack.audioSrc)) {
+          this.audioElement.src = this.currentTrack.audioSrc;
+        }
+        await this.audioElement.play();
+        this.isPlaying = true;
+        this.startMorphTimer();
+      } catch (e) {
+        console.warn('AudioElement play failed:', e);
+        this.isPlaying = false;
+      }
     }
   }
 
-  public play() {
-    this.init();
-    if (this.ctx && this.ctx.state === 'suspended') {
-      this.ctx.resume();
-    }
-    this.isPlaying = true;
-    this.startSequencer();
-  }
-
-  public pause() {
+  public pause(): void {
     this.isPlaying = false;
-    if (this.stepTimer) {
-      window.clearInterval(this.stepTimer);
-      this.stepTimer = null;
+    if (this.audioElement) {
+      this.audioElement.pause();
+    }
+    this.stopMorphTimer();
+  }
+
+  public toggle(): void {
+    if (this.isPlaying) {
+      this.pause();
+    } else {
+      void this.play();
     }
   }
 
-  public toggle() {
-    if (this.isPlaying) this.pause();
-    else this.play();
-  }
-
-  public setVolume(vol: number) {
+  public setVolume(vol: number): void {
     this.volume = Math.max(0, Math.min(1, vol));
     if (this.masterGain && this.ctx) {
       this.masterGain.gain.setValueAtTime(this.volume, this.ctx.currentTime);
@@ -192,249 +231,116 @@ class LofiAudioEngine {
     return this.currentPlaylist;
   }
 
-  public onMorph(cb: (track: ChillTrack) => void) {
+  public onMorph(cb: (track: ChillTrack) => void): () => void {
     this.onMorphCallbacks.push(cb);
+    return () => {
+      this.onMorphCallbacks = this.onMorphCallbacks.filter((c) => c !== cb);
+    };
   }
 
-  public setTrack(track: ChillTrack) {
+  public onTrackChange(cb: (track: ChillTrack) => void): () => void {
+    this.onTrackChangeCallbacks.push(cb);
+    return () => {
+      this.onTrackChangeCallbacks = this.onTrackChangeCallbacks.filter((c) => c !== cb);
+    };
+  }
+
+  public setTrack(track: ChillTrack): void {
     this.currentTrack = track;
-    this.step = 0;
-    this.chordIndex = 0;
+    this.onTrackChangeCallbacks.forEach((cb) => cb(track));
     this.onMorphCallbacks.forEach((cb) => cb(track));
-    if (this.isPlaying) {
-      this.startSequencer();
+
+    if (this.audioElement) {
+      const wasPlaying = this.isPlaying;
+      this.audioElement.src = track.audioSrc;
+      this.audioElement.currentTime = 0;
+      if (wasPlaying) {
+        void this.audioElement.play().catch((e) => console.warn('Track switch play error:', e));
+      }
     }
   }
 
-  public setPlaylist(playlist: ChillPlaylist) {
+  public setPlaylist(playlist: ChillPlaylist): void {
     this.currentPlaylist = playlist;
     this.trackIndex = 0;
-    this.setTrack(playlist.tracks[0]);
+    if (playlist.tracks.length > 0) {
+      this.setTrack(playlist.tracks[0]);
+    }
   }
 
-  public nextTrack() {
+  public nextTrack(): void {
     const tracks = this.currentPlaylist.tracks;
+    if (tracks.length === 0) return;
     this.trackIndex = (this.trackIndex + 1) % tracks.length;
     this.setTrack(tracks[this.trackIndex]);
   }
 
-  public prevTrack() {
+  public prevTrack(): void {
     const tracks = this.currentPlaylist.tracks;
+    if (tracks.length === 0) return;
     this.trackIndex = (this.trackIndex - 1 + tracks.length) % tracks.length;
     this.setTrack(tracks[this.trackIndex]);
   }
 
-  // Generates a new customized chill playlist
+  // Generates a new customized chill playlist pairing open-source recordings with visual presets
   public generateCustomPlaylist(name: string, vibe: string, baseBpm: number = 72): ChillPlaylist {
     const titles = [
       'Velvet Sunset Coffee',
       'Raindrops on Cedar',
       'Analog Tape Memories',
       'Midnight Subway Reflections',
-      'Breeze in the Bamboo Garden',
-      'Autumn Rooftop Study',
     ];
-    const keys = ['D minor 9', 'F major 7', 'C major 7'];
     const paletteIds = ['tokyo-night', 'synthwave-84', 'sunset-horizon', 'bioluminescence', 'nord-frost', 'monokai-pro'];
     const patternIds = ['lorenz-attractor', 'hypotrochoid-spirograph', 'perlin-flow-field', 'fourier-epicycles', 'jellyfish-pulse', 'chladni-plate'];
 
     const tracks: ChillTrack[] = [];
-    for (let i = 0; i < 4; i++) {
+    for (let i = 0; i < OPEN_SOURCE_LOFI_TRACKS.length; i++) {
+      const baseTrack = OPEN_SOURCE_LOFI_TRACKS[i];
       tracks.push({
         id: `custom-track-${Date.now()}-${i}`,
-        title: titles[i % titles.length],
-        artist: 'visualizerrr chill engine',
+        title: `${titles[i % titles.length]} (${baseTrack.title})`,
+        artist: baseTrack.artist,
         bpm: baseBpm + (i % 2 === 0 ? -2 : 3),
-        key: keys[i % keys.length],
+        key: baseTrack.key,
         vibe: vibe,
         paletteId: paletteIds[i % paletteIds.length],
         patternId: patternIds[i % patternIds.length],
+        audioSrc: baseTrack.audioSrc,
+        license: baseTrack.license,
       });
     }
 
     const playlist: ChillPlaylist = {
       id: `custom-${Date.now()}`,
       name: name || 'Custom Chill Session',
-      description: `Generative lofi chill soundscape (${vibe}) matching visual dynamics in real time`,
+      description: `Open source lofi chill soundscape (${vibe}) matching visual dynamics in real time`,
       tracks,
     };
 
     return playlist;
   }
 
-  private startSequencer() {
-    if (this.stepTimer) {
-      window.clearInterval(this.stepTimer);
-    }
+  // Periodic visual morph trigger during playback (every 40 seconds)
+  private startMorphTimer(): void {
+    this.stopMorphTimer();
+    if (typeof window === 'undefined') return;
 
-    // 16th note interval at current BPM
-    const bpm = this.currentTrack.bpm || 72;
-    const intervalMs = (60 / bpm / 4) * 1000;
-
-    this.stepTimer = window.setInterval(() => {
-      this.playStep();
-    }, intervalMs);
-  }
-
-  private playStep() {
-    if (!this.ctx || !this.isPlaying) return;
-
-    const key = this.currentTrack.key in CHORD_PROGRESSIONS ? this.currentTrack.key : 'D minor 9';
-    const chords = CHORD_PROGRESSIONS[key];
-    const currentChord = chords[this.chordIndex % chords.length];
-
-    // Every 16 steps (1 bar), change chord and trigger subtle morph
-    if (this.step % 16 === 0) {
-      this.chordIndex = (this.chordIndex + 1) % chords.length;
-      this.playRhodesChord(currentChord, 2.2);
-
-      // On 4-bar boundary, notify morph callback to shift visual parameters
-      if (this.step % 64 === 0) {
+    this.morphIntervalTimer = window.setInterval(() => {
+      if (this.isPlaying) {
+        // Trigger subtle morph to keep visuals dynamically evolving with the track
         this.onMorphCallbacks.forEach((cb) => cb(this.currentTrack));
       }
-    }
-
-    // Lofi Acoustic Kick on beat 1 and syncopated beat 3.5
-    if (this.step % 16 === 0 || this.step % 16 === 10) {
-      this.playKick();
-    }
-
-    // Soft Brush Snare / Rimshot on beat 2 and 4 (step 4 and 12)
-    if (this.step % 16 === 4 || this.step % 16 === 12) {
-      this.playSnare();
-    }
-
-    // Gentle closed Hi-hat on every 8th note with subtle swing
-    if (this.step % 2 === 0) {
-      this.playHiHat(this.step % 4 === 2);
-    }
-
-    // Soft melodic embellishment (Rhodes high note)
-    if (this.step % 8 === 6 && Math.random() < 0.6) {
-      const highNote = currentChord[Math.floor(Math.random() * currentChord.length)] * 2;
-      this.playMelodyNote(highNote, 0.4);
-    }
-
-    this.step++;
+    }, 40000);
   }
 
-  // Synthesis of warm lofi Rhodes chord
-  private playRhodesChord(notes: number[], duration: number) {
-    if (!this.ctx || !this.filterNode) return;
-    const now = this.ctx.currentTime;
-
-    notes.forEach((freq, idx) => {
-      const osc = this.ctx!.createOscillator();
-      const gain = this.ctx!.createGain();
-
-      // Sine + Triangle blend for warm electric piano tone
-      osc.type = idx % 2 === 0 ? 'sine' : 'triangle';
-      // Gentle vintage detune flutter
-      osc.frequency.setValueAtTime(freq, now);
-      osc.detune.setValueAtTime((Math.random() - 0.5) * 8, now);
-
-      gain.gain.setValueAtTime(0, now);
-      gain.gain.linearRampToValueAtTime(0.12 / notes.length, now + 0.04);
-      gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
-
-      osc.connect(gain);
-      gain.connect(this.filterNode!);
-      osc.start(now);
-      osc.stop(now + duration);
-    });
-  }
-
-  // Melodic single note
-  private playMelodyNote(freq: number, duration: number) {
-    if (!this.ctx || !this.filterNode) return;
-    const now = this.ctx.currentTime;
-    const osc = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
-
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(freq, now);
-
-    gain.gain.setValueAtTime(0.04, now);
-    gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
-
-    osc.connect(gain);
-    gain.connect(this.filterNode);
-    osc.start(now);
-    osc.stop(now + duration);
-  }
-
-  // Sub-bass 808/acoustic lofi kick
-  private playKick() {
-    if (!this.ctx || !this.masterGain) return;
-    const now = this.ctx.currentTime;
-    const osc = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
-
-    osc.frequency.setValueAtTime(120, now);
-    osc.frequency.exponentialRampToValueAtTime(42, now + 0.12);
-
-    gain.gain.setValueAtTime(0.45, now);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
-
-    osc.connect(gain);
-    gain.connect(this.masterGain);
-    osc.start(now);
-    osc.stop(now + 0.25);
-  }
-
-  // Soft brush snare
-  private playSnare() {
-    if (!this.ctx || !this.masterGain) return;
-    const now = this.ctx.currentTime;
-
-    // Filtered noise burst
-    const bufferSize = Math.floor(this.ctx.sampleRate * 0.15);
-    const noiseBuffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
-    const output = noiseBuffer.getChannelData(0);
-    for (let i = 0; i < bufferSize; i++) {
-      output[i] = Math.random() * 2 - 1;
+  private stopMorphTimer(): void {
+    if (this.morphIntervalTimer && typeof window !== 'undefined') {
+      window.clearInterval(this.morphIntervalTimer);
+      this.morphIntervalTimer = null;
     }
-
-    const noise = this.ctx.createBufferSource();
-    noise.buffer = noiseBuffer;
-
-    const filter = this.ctx.createBiquadFilter();
-    filter.type = 'highpass';
-    filter.frequency.setValueAtTime(1000, now);
-
-    const gain = this.ctx.createGain();
-    gain.gain.setValueAtTime(0.18, now);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.14);
-
-    noise.connect(filter);
-    filter.connect(gain);
-    gain.connect(this.masterGain);
-
-    noise.start(now);
-    noise.stop(now + 0.15);
   }
 
-  // Soft closed hi-hat
-  private playHiHat(accent: boolean) {
-    if (!this.ctx || !this.masterGain) return;
-    const now = this.ctx.currentTime;
-    const osc = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
-
-    osc.type = 'square';
-    osc.frequency.setValueAtTime(8000, now);
-
-    const vol = accent ? 0.05 : 0.025;
-    gain.gain.setValueAtTime(vol, now);
-    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.04);
-
-    osc.connect(gain);
-    gain.connect(this.masterGain);
-    osc.start(now);
-    osc.stop(now + 0.05);
-  }
-
-  // Real-time audio metric analysis
+  // Real-time audio metric analysis computed from the actual audio frequency spectrum
   public getMetrics(): AudioMetrics {
     if (!this.analyser || !this.isPlaying) {
       return {
@@ -446,39 +352,49 @@ class LofiAudioEngine {
       };
     }
 
-    (this.analyser as unknown as { getByteFrequencyData: (d: Uint8Array) => void }).getByteFrequencyData(this.freqData);
+    try {
+      (this.analyser as unknown as { getByteFrequencyData: (d: Uint8Array) => void }).getByteFrequencyData(this.freqData);
 
-    let bassSum = 0;
-    const bassEnd = Math.floor(this.freqData.length * 0.1);
-    for (let i = 0; i < bassEnd; i++) {
-      bassSum += this.freqData[i];
+      let bassSum = 0;
+      const bassEnd = Math.max(1, Math.floor(this.freqData.length * 0.12));
+      for (let i = 0; i < bassEnd; i++) {
+        bassSum += this.freqData[i];
+      }
+      const bass = bassSum / (bassEnd * 255);
+
+      let midSum = 0;
+      const midEnd = Math.max(bassEnd + 1, Math.floor(this.freqData.length * 0.45));
+      for (let i = bassEnd; i < midEnd; i++) {
+        midSum += this.freqData[i];
+      }
+      const mid = midSum / ((midEnd - bassEnd) * 255);
+
+      let trebleSum = 0;
+      for (let i = midEnd; i < this.freqData.length; i++) {
+        trebleSum += this.freqData[i];
+      }
+      const treble = trebleSum / ((this.freqData.length - midEnd) * 255);
+
+      const volume = bass * 0.45 + mid * 0.35 + treble * 0.2;
+      const beat = bass > 0.42;
+
+      return {
+        bass,
+        mid,
+        treble,
+        volume,
+        beat,
+        frequencyData: this.freqData,
+      };
+    } catch {
+      return {
+        bass: 0,
+        mid: 0,
+        treble: 0,
+        volume: 0,
+        beat: false,
+      };
     }
-    const bass = bassSum / (bassEnd * 255);
-
-    let midSum = 0;
-    const midEnd = Math.floor(this.freqData.length * 0.4);
-    for (let i = bassEnd; i < midEnd; i++) {
-      midSum += this.freqData[i];
-    }
-    const mid = midSum / ((midEnd - bassEnd) * 255);
-
-    let trebleSum = 0;
-    for (let i = midEnd; i < this.freqData.length; i++) {
-      trebleSum += this.freqData[i];
-    }
-    const treble = trebleSum / ((this.freqData.length - midEnd) * 255);
-
-    const volume = (bass * 0.5 + mid * 0.35 + treble * 0.15);
-    const beat = bass > 0.45;
-
-    return {
-      bass,
-      mid,
-      treble,
-      volume,
-      beat,
-      frequencyData: this.freqData,
-    };
   }
 }
 

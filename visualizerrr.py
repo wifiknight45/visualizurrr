@@ -241,6 +241,34 @@ def run_terminal_visualizer(pattern_id, palette_name, speed=1.0, duration=10):
         sys.stdout.flush()
 
 def main():
+    raw_args = sys.argv[1:]
+    processed_args = []
+    i = 0
+    while i < len(raw_args):
+        arg = raw_args[i]
+        if arg in ("list_patterns", "list-patterns", "listpatterns"):
+            processed_args.append("--list-patterns")
+        elif arg in ("list_palettes", "list-palettes", "listpalettes"):
+            processed_args.append("--list-palettes")
+        elif arg == "pattern" and i + 1 < len(raw_args):
+            processed_args.extend(["--pattern", raw_args[i + 1]])
+            i += 1
+        elif arg == "palette" and i + 1 < len(raw_args):
+            processed_args.extend(["--palette", raw_args[i + 1]])
+            i += 1
+        elif arg == "speed" and i + 1 < len(raw_args):
+            processed_args.extend(["--speed", raw_args[i + 1]])
+            i += 1
+        elif arg == "duration" and i + 1 < len(raw_args):
+            processed_args.extend(["--duration", raw_args[i + 1]])
+            i += 1
+        elif arg == "export" and i + 1 < len(raw_args):
+            processed_args.extend(["--export", raw_args[i + 1]])
+            i += 1
+        else:
+            processed_args.append(arg)
+        i += 1
+
     parser = argparse.ArgumentParser(description="visualizerrr — Python Algorithmic Visualizer CLI")
     parser.add_argument("--pattern", "-p", default="lorenz", help="Pattern ID or index (1-68)")
     parser.add_argument("--palette", "-c", default="python-classic", help="Color palette ID or name")
@@ -250,7 +278,7 @@ def main():
     parser.add_argument("--list-palettes", action="store_true", help="Print all 26 available color palettes")
     parser.add_argument("--export", help="Export standalone python script for specified pattern")
 
-    args = parser.parse_args()
+    args = parser.parse_args(processed_args)
 
     if args.list_patterns:
         print("\n\033[1;36m=== visualizerrr 68 Aesthetic Patterns ===\033[0m\n")

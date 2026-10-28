@@ -433,7 +433,7 @@ export const ChillMusicPlayer: React.FC<ChillMusicPlayerProps> = ({
             {/* Footer */}
             <div className="p-3 border-t border-zinc-800 bg-zinc-950 flex items-center justify-between text-xs text-zinc-500 font-mono">
               <span>Visuals pulse to bass, hue shifts to chord keys</span>
-              <span>100% royalty-free procedural audio</span>
+              <span>100% open source CC0 audio tracks</span>
             </div>
           </div>
         </div>

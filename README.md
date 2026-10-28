@@ -16,7 +16,7 @@ python algorithmic visualizer and open source lofi chill station
 
 visualizurrr is an interactive mathematical art and algorithmic pattern visualizer built for both modern web browsers and bash terminals. The application showcases sixty eight distinct mathematical patterns alongside twenty six curated color palettes, real time animation speed modulation, tactile controls and an audio reactive open source lofi chill sound engine that dynamically morphs visual patterns and color palettes to match musical phrasing and frequencies.
 
-![visualizerrr main overview](public/screenshots/desktop.png)
+![visualizurrr main overview](public/screenshots/desktop.png)
 
 
 visualizurrr features genuine open source studio recorded lofi tracks released under Creative Commons Zero public domain dedication. The audio engine connects directly to Web Audio API frequency analysis nodes to drive visual reactivity without synthetic beeps.

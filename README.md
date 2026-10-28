@@ -47,19 +47,7 @@ When the Morph button is active, visualizurrr synchronizes audio and visuals aut
 
 ![visualizurrr chill playlists](public/screenshots/playlists.png)
 
-## How to Push to Git Repository
-
-The local git repository is configured with origin pointing to https://github.com/wifiknight45/visualizerrr.git. Because automated remote environments do not possess your secret GitHub personal access token, git push will prompt for authentication.
-
-To push all commits and audio files directly to your GitHub repository in one step, choose either method below:
-
-Method one: Push from terminal with personal access token
-Replace YOUR_TOKEN with your GitHub personal access token:
-
-git push https://wifiknight45:YOUR_TOKEN@github.com/wifiknight45/visualizerrr.git main
-
-Method two: Pull or clone and push from your authenticated computer
-On your local machine where your git credentials and SSH keys are already stored:
+## how to use via bash (linux)
 
 git clone https://github.com/wifiknight45/visualizerrr.git
 cd visualizerrr
@@ -144,17 +132,29 @@ python3 visualizerrr.py speed 2.5
 ## Web Application Commands and Shortcuts
 
 Space key: Play or pause animation
+
 Right Arrow: Next pattern
+
 Left Arrow: Previous pattern
+
 Up Arrow: Increase speed
+
 Down Arrow: Decrease speed
+
 C key: Cycle predefined color palette
+
 R key: Randomize pattern and palette
+
 M key: Cycle rendering mode between curves, particles, wireframe, heatmap, and neon
+
 G key: Toggle glow effect
+
 T key: Toggle trail persistence
+
 P key: Open Python code inspector
+
 O key: Open full pattern explorer
+
 S key: Save high resolution PNG image
 
 ## Architecture and Testing

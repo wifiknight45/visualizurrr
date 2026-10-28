@@ -10,8 +10,6 @@
 
 Python Algorithmic Visualizer and Open Source Lofi Chill Station
 
-Official Website and Source Code: https://github.com/wifiknight45/visualizerrr
-Author: wifiknight45
 
 ## Overview
 

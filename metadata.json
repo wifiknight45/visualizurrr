@@ -1,0 +1,6 @@
+{
+  "name": "visualizerrr",
+  "description": "Python visualizer app with a vast array of colors and modes, interactive animations, 68+ aesthetic patterns, and 24+ color palettes by wifiknight45.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

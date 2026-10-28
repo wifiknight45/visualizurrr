@@ -14,6 +14,7 @@ import { PalettePickerModal } from './components/PalettePickerModal';
 import { PatternGalleryModal } from './components/PatternGalleryModal';
 import { PythonCodeDrawer } from './components/PythonCodeDrawer';
 import { KeyboardShortcutsModal } from './components/KeyboardShortcutsModal';
+import { ChillMusicPlayer } from './components/ChillMusicPlayer';
 
 export default function App() {
   const [patternIndex, setPatternIndex] = useState<number>(0);
@@ -23,6 +24,7 @@ export default function App() {
   const [isPlaying, setIsPlaying] = useState<boolean>(true);
   const [glow, setGlow] = useState<boolean>(true);
   const [trails, setTrails] = useState<boolean>(true);
+  const [isMorphEnabled, setIsMorphEnabled] = useState<boolean>(true);
 
   // Modals & Panels
   const [isPatternsOpen, setIsPatternsOpen] = useState<boolean>(false);
@@ -39,6 +41,18 @@ export default function App() {
   useEffect(() => {
     setPatternParams(currentPattern.defaultParameters);
   }, [currentPattern]);
+
+  // Handle audio morph triggered by music bars / track changes
+  const handleAudioMorph = useCallback((targetPatternId: string, targetPaletteId: string) => {
+    const patIdx = ALL_PATTERNS.findIndex((p) => p.id === targetPatternId);
+    if (patIdx !== -1) {
+      setPatternIndex(patIdx);
+    }
+    const pal = COLOR_PALETTES.find((p) => p.id === targetPaletteId);
+    if (pal) {
+      setCurrentPalette(pal);
+    }
+  }, []);
 
   const handlePrevPattern = useCallback(() => {
     setPatternIndex((prev) => (prev > 0 ? prev - 1 : ALL_PATTERNS.length - 1));
@@ -176,6 +190,13 @@ export default function App() {
           glow={glow}
           trails={trails}
           params={patternParams}
+        />
+
+        {/* Lofi Chill Music Player & Spectrum Engine */}
+        <ChillMusicPlayer
+          onMorphTriggered={handleAudioMorph}
+          isMorphEnabled={isMorphEnabled}
+          onToggleMorph={() => setIsMorphEnabled((prev) => !prev)}
         />
 
         {/* Floating Bottom Control Dock */}

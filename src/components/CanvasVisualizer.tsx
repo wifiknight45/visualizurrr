@@ -4,8 +4,9 @@
  */
 
 import React, { useEffect, useRef, useState, useCallback } from 'react';
-import { PatternDefinition, ColorPalette, RenderMode } from '../types/visualizer';
+import { PatternDefinition, ColorPalette, RenderMode, AudioMetrics } from '../types/visualizer';
 import { samplePalette, samplePaletteRgba, hexToRgb } from '../utils/color';
+import { audioEngine } from '../utils/audioEngine';
 
 interface CanvasVisualizerProps {
   pattern: PatternDefinition;
@@ -16,6 +17,7 @@ interface CanvasVisualizerProps {
   glow: boolean;
   trails: boolean;
   params: Record<string, number>;
+  audioReactive?: boolean;
   onSnapshotReady?: (dataUrl: string) => void;
   canvasRefOut?: React.RefObject<HTMLCanvasElement | null>;
 }
@@ -29,6 +31,7 @@ export const CanvasVisualizer: React.FC<CanvasVisualizerProps> = ({
   glow,
   trails,
   params,
+  audioReactive = true,
   onSnapshotReady,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -61,6 +64,7 @@ export const CanvasVisualizer: React.FC<CanvasVisualizerProps> = ({
     glow,
     trails,
     params,
+    audioReactive,
   });
 
   useEffect(() => {
@@ -73,8 +77,9 @@ export const CanvasVisualizer: React.FC<CanvasVisualizerProps> = ({
       glow,
       trails,
       params,
+      audioReactive,
     };
-  }, [pattern, palette, renderMode, speed, isPlaying, glow, trails, params]);
+  }, [pattern, palette, renderMode, speed, isPlaying, glow, trails, params, audioReactive]);
 
   // Handle canvas resizing
   const handleResize = useCallback(() => {
@@ -134,8 +139,12 @@ export const CanvasVisualizer: React.FC<CanvasVisualizerProps> = ({
       const width = rect?.width || 800;
       const height = rect?.height || 600;
 
+      // Get real-time audio metrics
+      const audioMetrics = p.audioReactive ? audioEngine.getMetrics() : undefined;
+      const audioBoost = audioMetrics && audioMetrics.volume > 0.05 ? 1 + audioMetrics.bass * 0.4 : 1;
+
       if (p.isPlaying) {
-        timeRef.current += dt * p.speed;
+        timeRef.current += dt * p.speed * audioBoost;
         frameCountRef.current++;
       }
 
@@ -148,19 +157,33 @@ export const CanvasVisualizer: React.FC<CanvasVisualizerProps> = ({
         ctx.fillRect(0, 0, width, height);
       }
 
-      // Configure Glow effect
+      // Configure Glow effect with beat reactive flare
       if (p.glow) {
-        ctx.shadowBlur = 12;
+        const beatFlare = audioMetrics && audioMetrics.beat ? 18 : 12;
+        ctx.shadowBlur = beatFlare;
         ctx.shadowColor = p.palette.primary;
       } else {
         ctx.shadowBlur = 0;
       }
 
-      // Color sampler function
-      const sampleColor = (t: number) => samplePalette(p.palette.colors, t);
+      // Color sampler function with audio reactive hue shift
+      const sampleColor = (t: number) => {
+        const audioHueShift = audioMetrics ? audioMetrics.mid * 0.2 : 0;
+        return samplePalette(p.palette.colors, t + audioHueShift);
+      };
 
       // Render the current pattern
       ctx.save();
+      // Apply bass scale bounce around center if music is bumping
+      if (audioMetrics && audioMetrics.bass > 0.1) {
+        const cx = width / 2;
+        const cy = height / 2;
+        const scaleBounce = 1 + audioMetrics.bass * 0.06;
+        ctx.translate(cx, cy);
+        ctx.scale(scaleBounce, scaleBounce);
+        ctx.translate(-cx, -cy);
+      }
+
       try {
         p.pattern.render({
           ctx,
@@ -174,6 +197,7 @@ export const CanvasVisualizer: React.FC<CanvasVisualizerProps> = ({
           sampleColor,
           frameCount: frameCountRef.current,
           deltaTime: dt,
+          audio: audioMetrics,
         });
       } catch (err) {
         console.error('Render error:', err);

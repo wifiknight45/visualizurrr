@@ -44,6 +44,33 @@ export interface ColorPalette {
 
 export type RenderMode = 'curves' | 'particles' | 'mesh' | 'heatmap' | 'neon' | 'matrix';
 
+export interface AudioMetrics {
+  bass: number;
+  mid: number;
+  treble: number;
+  volume: number;
+  beat: boolean;
+  frequencyData?: Uint8Array;
+}
+
+export interface ChillTrack {
+  id: string;
+  title: string;
+  artist: string;
+  bpm: number;
+  key: string;
+  vibe: string;
+  paletteId: string;
+  patternId: string;
+}
+
+export interface ChillPlaylist {
+  id: string;
+  name: string;
+  description: string;
+  tracks: ChillTrack[];
+}
+
 export interface RenderContext {
   ctx: CanvasRenderingContext2D;
   width: number;
@@ -56,6 +83,7 @@ export interface RenderContext {
   sampleColor: (t: number) => string;
   frameCount: number;
   deltaTime: number;
+  audio?: AudioMetrics;
 }
 
 export interface PatternDefinition {

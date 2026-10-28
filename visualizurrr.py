@@ -1,8 +1,5 @@
 #!/usr/bin/env python3
 """
-visualizerrr — Python Algorithmic Visualizer
-Repository: https://github.com/wifiknight45/visualizerrr
-Author: wifiknight45
 
 An algorithmic art and mathematical pattern visualizer with 68 unique aesthetic
 modes and 26 predefined color palettes. Runs smoothly in standard bash terminals

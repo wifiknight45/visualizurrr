@@ -8,7 +8,8 @@
 ![Platform](https://img.shields.io/static/v1?label=Platform&message=WebAndBash&color=informational)
 ![License](https://img.shields.io/static/v1?label=License&message=Apache2&color=green)
 
-Python Algorithmic Visualizer and Open Source Lofi Chill Station
+
+python algorithmic visualizer and open source lofi chill station
 
 
 ## Overview

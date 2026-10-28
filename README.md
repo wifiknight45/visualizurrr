@@ -8,9 +8,6 @@
 
 Python Algorithmic Visualizer
 
-Repository: https://github.com/wifiknight45/visualizerrr
-Author: wifiknight45
-
 ## Overview
 
 visualizerrr is an interactive mathematical art and algorithmic pattern visualizer built for both modern web browsers and bash terminals. The application showcases sixty eight distinct mathematical patterns alongside twenty six curated color palettes, with real time animation speed modulation, tactile controls, and runnable Python scripts.

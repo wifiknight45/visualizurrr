@@ -14,11 +14,10 @@ python algorithmic visualizer and open source lofi chill station
 
 ## Overview
 
-visualizurrr is an interactive mathematical art and algorithmic pattern visualizer built for both modern web browsers and bash terminals. The application showcases sixty eight distinct mathematical patterns alongside twenty six curated color palettes, real time animation speed modulation, tactile controls, runnable Python scripts, and an audio reactive open source lofi chill sound engine that dynamically morphs visual patterns and color palettes to match musical phrasing and frequencies.
+visualizurrr is an interactive mathematical art and algorithmic pattern visualizer built for both modern web browsers and bash terminals. The application showcases sixty eight distinct mathematical patterns alongside twenty six curated color palettes, real time animation speed modulation, tactile controls and an audio reactive open source lofi chill sound engine that dynamically morphs visual patterns and color palettes to match musical phrasing and frequencies.
 
 ![visualizerrr main overview](public/screenshots/desktop.png)
 
-## Open Source Lofi Audio Engine and Visual Morphing
 
 visualizurrr features genuine open source studio recorded lofi tracks released under Creative Commons Zero public domain dedication. The audio engine connects directly to Web Audio API frequency analysis nodes to drive visual reactivity without synthetic beeps.
 
@@ -26,7 +25,7 @@ visualizurrr features genuine open source studio recorded lofi tracks released u
 The station bundles four authentic studio recordings:
 Track one: Cold Brew Chill by RA. Smooth Rhodes electric piano, mellow acoustic drum groove, and relaxed downtempo swing in E flat major seventh.
 Track two: Night in Kyoto by Avbe. Atmospheric nighttime Japanese chill hop with acoustic guitars and subtle vinyl texture in D minor ninth.
-Track three: Moonshine Vibes by Prigida. Vintage analog tape saturation, warm basslines, and golden era hip hop beats in F major seventh.
+Track three: Moonshine Vibes by Prigida. Vintage analog tape saturation, warm bass-lines, and golden era hip hop beats in F major seventh.
 Track four: Midnight Study Session by Lofi Records. Deep rain drenched acoustic piano chords with immersive low end warmth in C major seventh.
 
 2. Controlling Playback
@@ -47,12 +46,11 @@ When the Morph button is active, visualizurrr synchronizes audio and visuals aut
 
 ![visualizurrr chill playlists](public/screenshots/playlists.png)
 
-## how to use via bash (linux)
+## how to use via bash 
 
 git clone https://github.com/wifiknight45/visualizerrr.git
 cd visualizerrr
-git pull
-git push origin main
+
 
 All audio files inside public audio are fully tracked and committed in git history.
 
@@ -118,16 +116,16 @@ python3 visualizerrr.py
 
 Available commands:
 To list all sixty eight patterns:
-python3 visualizerrr.py list_patterns
+python3 visualizurrr.py list_patterns
 
 To list all twenty six palettes:
-python3 visualizerrr.py list_palettes
+python3 visualizurrr.py list_palettes
 
 To select pattern number two:
-python3 visualizerrr.py pattern 2
+python3 visualizurrr.py pattern 2
 
 To set custom speed:
-python3 visualizerrr.py speed 2.5
+python3 visualizurrr.py speed 2.5
 
 ## Web Application Commands and Shortcuts
 

@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run lint # tsc --noEmit under strict mode
+      - run: npm test
+      - run: npm run build
+
+  python-cli:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Validate pyproject.toml
+        run: python3 -c "import tomllib; tomllib.load(open('pyproject.toml', 'rb')); print('pyproject.toml parses')"
+
+      - name: Byte-compile the CLI and one export of each kind
+        run: |
+          python3 -m py_compile visualizurrr.py
+          python3 visualizurrr.py export /tmp/export_field.py --pattern mandelbrot
+          python3 visualizurrr.py export /tmp/export_grid.py --pattern life
+          python3 -m py_compile /tmp/export_field.py /tmp/export_grid.py
+      - name: CLI lists its patterns and palettes
+        run: |
+          python3 visualizurrr.py list-patterns > /dev/null
+          python3 visualizurrr.py list-palettes > /dev/null
+      - name: Pattern data has not drifted between web and CLI
+        run: python3 scripts/generate_patterns_json.py --check

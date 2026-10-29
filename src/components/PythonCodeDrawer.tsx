@@ -30,41 +30,76 @@ export const PythonCodeDrawer: React.FC<PythonCodeDrawerProps> = ({
   onResetParams,
 }) => {
   const [copied, setCopied] = useState(false);
+  const [copyFailed, setCopyFailed] = useState(false);
   const [activeTab, setActiveTab] = useState<'code' | 'params'>('code');
 
-  const pythonSource = pattern.pythonCode(params, palette.name);
+  const pythonSource = pattern.pythonCode(params, palette);
+
+  // The generated scripts never declared their dependencies. Detect the
+  // third-party imports actually present and prepend an install line,
+  // so display, copy and download all carry a runnable script.
+  const detectedDeps = Array.from(
+    new Set(
+      Array.from(pythonSource.matchAll(/^(?:import|from)\s+([a-zA-Z0-9_]+)/gm)).map(
+        (m) => m[1]
+      )
+    )
+  ).filter((m) => m === 'numpy' || m === 'matplotlib' || m === 'scipy');
+  const exportSource =
+    (detectedDeps.length > 0
+      ? `# Requires: pip install ${detectedDeps.join(' ')}\n`
+      : '') + pythonSource;
 
   useEffect(() => {
     if (isOpen) {
       Prism.highlightAll();
     }
-  }, [isOpen, pythonSource, activeTab]);
+  }, [isOpen, exportSource, activeTab]);
 
   if (!isOpen) return null;
 
-  const handleCopy = () => {
-    navigator.clipboard.writeText(pythonSource);
-    setCopied(true);
-    confetti({
-      particleCount: 40,
-      spread: 60,
-      origin: { y: 0.8 },
-    });
-    setTimeout(() => setCopied(false), 2000);
+  // Clipboard writes can fail (permissions, insecure origin such as a
+  // plain-HTTP dev server). Only celebrate on actual success.
+  const copyText = async (text: string): Promise<boolean> => {
+    try {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
+  const handleCopy = async () => {
+    if (await copyText(exportSource)) {
+      setCopied(true);
+      confetti({
+        particleCount: 40,
+        spread: 60,
+        origin: { y: 0.8 },
+      });
+      setTimeout(() => setCopied(false), 2000);
+    } else {
+      setCopyFailed(true);
+      setTimeout(() => setCopyFailed(false), 2000);
+    }
   };
 
   const handleDownload = () => {
-    const blob = new Blob([pythonSource], { type: 'text/x-python' });
+    const blob = new Blob([exportSource], { type: 'text/x-python' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
     a.download = `${pattern.id}_visualizer.py`;
+    document.body.appendChild(a);
     a.click();
-    URL.revokeObjectURL(url);
+    a.remove();
+    // Revoking synchronously can cancel the download in Safari; give the
+    // browser a moment to start it first.
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
   };
 
   return (
-    <div className="fixed inset-y-0 right-0 z-40 w-full sm:w-[500px] lg:w-[560px] bg-zinc-950 border-l border-zinc-800 shadow-2xl flex flex-col animate-in slide-in-from-right duration-200">
+    <div className="fixed inset-y-0 right-0 z-40 w-full sm:w-[500px] lg:w-[560px] bg-zinc-950 border-l border-zinc-800 shadow-2xl flex flex-col animate-in slide-in-from-right duration-200" role="dialog" aria-modal="true" aria-label="Python code inspector">
       {/* Drawer Header */}
       <div className="p-4 border-b border-zinc-800 flex items-center justify-between bg-zinc-900/60">
         <div className="flex items-center gap-2.5">
@@ -129,7 +164,7 @@ export const PythonCodeDrawer: React.FC<PythonCodeDrawerProps> = ({
             title="Copy Python Code to Clipboard"
           >
             {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-            <span>{copied ? 'Copied' : 'Copy'}</span>
+            <span>{copied ? 'Copied' : copyFailed ? 'Copy failed' : 'Copy'}</span>
           </button>
 
           <button
@@ -148,14 +183,22 @@ export const PythonCodeDrawer: React.FC<PythonCodeDrawerProps> = ({
           <Terminal className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
           <span className="text-zinc-500">$</span>
           <span className="text-zinc-300 truncate">
-            ./visualizerrr.py --pattern {pattern.number} --palette {palette.id}
+            ./visualizurrr.py --pattern {pattern.number} --palette {palette.id}
           </span>
         </div>
         <button
-          onClick={() => {
-            navigator.clipboard.writeText(`./visualizerrr.py --pattern ${pattern.number} --palette ${palette.id}`);
-            setCopied(true);
-            setTimeout(() => setCopied(false), 1500);
+          onClick={async () => {
+            if (
+              await copyText(
+                `./visualizurrr.py --pattern ${pattern.number} --palette ${palette.id}`
+              )
+            ) {
+              setCopied(true);
+              setTimeout(() => setCopied(false), 1500);
+            } else {
+              setCopyFailed(true);
+              setTimeout(() => setCopyFailed(false), 1500);
+            }
           }}
           className="text-[10px] text-zinc-400 hover:text-white ml-2 shrink-0 underline"
         >
@@ -168,7 +211,7 @@ export const PythonCodeDrawer: React.FC<PythonCodeDrawerProps> = ({
         {activeTab === 'code' ? (
           <div className="relative">
             <pre className="p-4 rounded-xl bg-zinc-900/90 border border-zinc-800 text-xs font-mono text-zinc-200 overflow-x-auto leading-relaxed shadow-inner">
-              <code className="language-python">{pythonSource}</code>
+              <code className="language-python">{exportSource}</code>
             </pre>
           </div>
         ) : (

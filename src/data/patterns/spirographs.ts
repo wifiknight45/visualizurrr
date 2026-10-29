@@ -4,6 +4,7 @@
  */
 
 import { PatternDefinition } from '../../types/visualizer';
+import { drawPath, fillCircle, strokeCircle } from '../../utils/drawModes';
 
 export const SPIROGRAPH_PATTERNS: PatternDefinition[] = [
   {
@@ -22,9 +23,9 @@ export const SPIROGRAPH_PATTERNS: PatternDefinition[] = [
       { id: 'rotations', name: 'Loop Multiplier', min: 4, max: 30, step: 2, defaultValue: 16 },
     ],
     defaultParameters: { fixedR: 200, movingR: 66, distanceD: 110, rotations: 16 },
-    pythonCode: (params, paletteName) => `"""
+    pythonCode: (params, palette) => `"""
 Hypotrochoid Spirograph in Python
-Palette: ${paletteName}
+Palette: ${palette.name}
 """
 import numpy as np
 import matplotlib.pyplot as plt
@@ -38,16 +39,17 @@ theta = np.linspace(0, revs * 2 * np.pi, revs * 800)
 x = (R - r) * np.cos(theta) + d * np.cos((R - r) * theta / r)
 y = (R - r) * np.sin(theta) - d * np.sin((R - r) * theta / r)
 
-plt.figure(figsize=(8, 8), facecolor='#090a15')
-plt.plot(x, y, color='#00f0ff', lw=1.0)
+plt.figure(figsize=(8, 8), facecolor='${palette.background}')
+plt.plot(x, y, color='${palette.primary}', lw=1.0)
 plt.axis('equal')
 plt.axis('off')
 plt.show()`,
     render: (ctx) => {
-      const { ctx: c, width, height, time, params, sampleColor } = ctx;
+      const { ctx: c, width, height, time, params, sampleColor, mode, audio } = ctx;
       const R = params.fixedR ?? 200;
       const r = params.movingR ?? 66;
-      const d = params.distanceD ?? 110;
+      // Bass gently breathes the pen distance.
+      const d = (params.distanceD ?? 110) * (1 + (audio?.bass ?? 0) * 0.18);
       const revs = params.rotations ?? 16;
 
       const scale = Math.min(width, height) / 600;
@@ -57,27 +59,14 @@ plt.show()`,
       const totalPoints = revs * 250;
       const rot = time * 0.15;
 
-      c.lineWidth = 1.4;
-      c.beginPath();
-
+      const pts: { x: number; y: number }[] = [];
       for (let i = 0; i <= totalPoints; i++) {
         const theta = (i / totalPoints) * revs * Math.PI * 2 + rot;
         const x = (R - r) * Math.cos(theta) + d * Math.cos(((R - r) * theta) / r);
         const y = (R - r) * Math.sin(theta) - d * Math.sin(((R - r) * theta) / r);
-
-        const px = cx + x * scale;
-        const py = cy + y * scale;
-
-        if (i === 0) c.moveTo(px, py);
-        else c.lineTo(px, py);
-
-        if (i % 80 === 0 || i === totalPoints) {
-          c.strokeStyle = sampleColor((i / totalPoints + time * 0.08) % 1);
-          c.stroke();
-          c.beginPath();
-          c.moveTo(px, py);
-        }
+        pts.push({ x: cx + x * scale, y: cy + y * scale });
       }
+      drawPath(c, pts, mode, (t) => sampleColor((t + time * 0.08) % 1), 1.4);
     },
   },
   {
@@ -95,9 +84,9 @@ plt.show()`,
       { id: 'scale', name: 'Flower Scale', min: 0.5, max: 2, step: 0.1, defaultValue: 1.0 },
     ],
     defaultParameters: { petals: 6, offset: 90, scale: 1.0 },
-    pythonCode: (params, paletteName) => `"""
+    pythonCode: (params, palette) => `"""
 Epitrochoid Floral Rosette
-Palette: ${paletteName}
+Palette: ${palette.name}
 """
 import numpy as np
 import matplotlib.pyplot as plt
@@ -111,13 +100,13 @@ theta = np.linspace(0, 2 * np.pi, 2000)
 x = (R + r) * np.cos(theta) - d * np.cos((R + r) * theta / r)
 y = (R + r) * np.sin(theta) - d * np.sin((R + r) * theta / r)
 
-plt.figure(figsize=(8, 8), facecolor='#090a15')
-plt.plot(x, y, color='#ff007f', lw=1.2)
+plt.figure(figsize=(8, 8), facecolor='${palette.background}')
+plt.plot(x, y, color='${palette.accent}', lw=1.2)
 plt.axis('equal')
 plt.axis('off')
 plt.show()`,
     render: (ctx) => {
-      const { ctx: c, width, height, time, params, sampleColor } = ctx;
+      const { ctx: c, width, height, time, params, sampleColor, mode } = ctx;
       const k = params.petals ?? 6;
       const r = 25;
       const R = k * r;
@@ -129,27 +118,14 @@ plt.show()`,
       const totalPoints = 1800;
       const rot = time * 0.2;
 
-      c.lineWidth = 1.6;
-      c.beginPath();
-
+      const pts: { x: number; y: number }[] = [];
       for (let i = 0; i <= totalPoints; i++) {
         const theta = (i / totalPoints) * Math.PI * 2 + rot;
         const x = (R + r) * Math.cos(theta) - d * Math.cos(((R + r) * theta) / r);
         const y = (R + r) * Math.sin(theta) - d * Math.sin(((R + r) * theta) / r);
-
-        const px = cx + x * baseScale;
-        const py = cy + y * baseScale;
-
-        if (i === 0) c.moveTo(px, py);
-        else c.lineTo(px, py);
-
-        if (i % 70 === 0 || i === totalPoints) {
-          c.strokeStyle = sampleColor((i / totalPoints + time * 0.1) % 1);
-          c.stroke();
-          c.beginPath();
-          c.moveTo(px, py);
-        }
+        pts.push({ x: cx + x * baseScale, y: cy + y * baseScale });
       }
+      drawPath(c, pts, mode, (t) => sampleColor((t + time * 0.1) % 1), 1.6);
     },
   },
   {
@@ -166,9 +142,9 @@ plt.show()`,
       { id: 'd', name: 'Angular Chord Degree (d)', min: 29, max: 97, step: 2, defaultValue: 71 },
     ],
     defaultParameters: { n: 6, d: 71 },
-    pythonCode: (params, paletteName) => `"""
+    pythonCode: (params, palette) => `"""
 Maurer Rose in Python
-Palette: ${paletteName}
+Palette: ${palette.name}
 """
 import numpy as np
 import matplotlib.pyplot as plt
@@ -183,13 +159,13 @@ r = np.sin(n * theta)
 x = r * np.cos(theta)
 y = r * np.sin(theta)
 
-plt.figure(figsize=(8, 8), facecolor='#090a15')
-plt.plot(x, y, color='#a855f7', lw=0.8)
+plt.figure(figsize=(8, 8), facecolor='${palette.background}')
+plt.plot(x, y, color='${palette.accent}', lw=0.8)
 plt.axis('equal')
 plt.axis('off')
 plt.show()`,
     render: (ctx) => {
-      const { ctx: c, width, height, time, params, sampleColor } = ctx;
+      const { ctx: c, width, height, time, params, sampleColor, mode } = ctx;
       const n = params.n ?? 6;
       const d = params.d ?? 71;
 
@@ -198,39 +174,22 @@ plt.show()`,
       const cy = height / 2;
       const rot = time * 0.1;
 
-      c.lineWidth = 1.1;
-
-      // Draw Maurer chords
-      c.beginPath();
+      // Maurer chords
+      const chords: { x: number; y: number }[] = [];
       for (let k = 0; k <= 360; k++) {
         const theta = ((k * d * Math.PI) / 180) + rot;
         const r = Math.sin(n * theta) * radius;
-        const px = cx + r * Math.cos(theta);
-        const py = cy + r * Math.sin(theta);
-
-        if (k === 0) c.moveTo(px, py);
-        else c.lineTo(px, py);
-
-        if (k % 45 === 0 || k === 360) {
-          c.strokeStyle = sampleColor((k / 360 + time * 0.05) % 1);
-          c.stroke();
-          c.beginPath();
-          c.moveTo(px, py);
-        }
+        chords.push({ x: cx + r * Math.cos(theta), y: cy + r * Math.sin(theta) });
       }
+      drawPath(c, chords, mode, (t) => sampleColor((t + time * 0.05) % 1), 1.1);
 
-      // Draw underlying smooth rose outline in soft accent
-      c.beginPath();
-      c.lineWidth = 2.0;
+      // Underlying smooth rose outline in soft accent
+      const outline: { x: number; y: number }[] = [];
       for (let theta = 0; theta <= Math.PI * 2; theta += 0.01) {
         const r = Math.sin(n * (theta + rot)) * radius;
-        const px = cx + r * Math.cos(theta + rot);
-        const py = cy + r * Math.sin(theta + rot);
-        if (theta === 0) c.moveTo(px, py);
-        else c.lineTo(px, py);
+        outline.push({ x: cx + r * Math.cos(theta + rot), y: cy + r * Math.sin(theta + rot) });
       }
-      c.strokeStyle = sampleColor(0.85);
-      c.stroke();
+      drawPath(c, outline, mode, () => sampleColor(0.85), 2.0);
     },
   },
   {
@@ -249,9 +208,9 @@ plt.show()`,
       { id: 'points', name: 'Harmonic Trace Steps', min: 1000, max: 4000, step: 500, defaultValue: 2500 },
     ],
     defaultParameters: { f1: 3.01, f2: 2.0, damping: 0.001, points: 2500 },
-    pythonCode: (params, paletteName) => `"""
+    pythonCode: (params, palette) => `"""
 Dual Damped Harmonograph in Python
-Palette: ${paletteName}
+Palette: ${palette.name}
 """
 import numpy as np
 import matplotlib.pyplot as plt
@@ -263,13 +222,13 @@ t = np.linspace(0, 150, ${params.points})
 x = np.sin(f1 * t) * np.exp(-d * t)
 y = np.sin(f2 * t + np.pi/4) * np.exp(-d * t)
 
-plt.figure(figsize=(8, 8), facecolor='#090a15')
-plt.plot(x, y, color='#38bdf8', lw=0.7)
+plt.figure(figsize=(8, 8), facecolor='${palette.background}')
+plt.plot(x, y, color='${palette.primary}', lw=0.7)
 plt.axis('equal')
 plt.axis('off')
 plt.show()`,
     render: (ctx) => {
-      const { ctx: c, width, height, time, params, sampleColor } = ctx;
+      const { ctx: c, width, height, time, params, sampleColor, mode } = ctx;
       const f1 = params.f1 ?? 3.01;
       const f2 = params.f2 ?? 2.0;
       const d = params.damping ?? 0.001;
@@ -281,28 +240,15 @@ plt.show()`,
       const p1 = time * 0.4;
       const p2 = time * 0.25 + Math.PI / 3;
 
-      c.lineWidth = 1.3;
-      c.beginPath();
-
+      const path: { x: number; y: number }[] = [];
       for (let i = 0; i < pts; i++) {
         const t = i * 0.08;
         const decay = Math.exp(-d * t);
         const x = Math.sin(f1 * t + p1) * decay * scale;
         const y = Math.sin(f2 * t + p2) * decay * scale;
-
-        const px = cx + x;
-        const py = cy + y;
-
-        if (i === 0) c.moveTo(px, py);
-        else c.lineTo(px, py);
-
-        if (i % 80 === 0 || i === pts - 1) {
-          c.strokeStyle = sampleColor((i / pts + time * 0.1) % 1);
-          c.stroke();
-          c.beginPath();
-          c.moveTo(px, py);
-        }
+        path.push({ x: cx + x, y: cy + y });
       }
+      drawPath(c, path, mode, (t) => sampleColor((t + time * 0.1) % 1), 1.3);
     },
   },
   {
@@ -320,9 +266,9 @@ plt.show()`,
       { id: 'seedSize', name: 'Seed Radius', min: 2, max: 8, step: 0.5, defaultValue: 4.5 },
     ],
     defaultParameters: { count: 1000, divergence: 137.51, seedSize: 4.5 },
-    pythonCode: (params, paletteName) => `"""
+    pythonCode: (params, palette) => `"""
 Golden Ratio Phyllotaxis Sunflower
-Palette: ${paletteName}
+Palette: ${palette.name}
 """
 import numpy as np
 import matplotlib.pyplot as plt
@@ -337,13 +283,13 @@ r = np.sqrt(indices)
 x = r * np.cos(theta)
 y = r * np.sin(theta)
 
-plt.figure(figsize=(8, 8), facecolor='#090a15')
+plt.figure(figsize=(8, 8), facecolor='${palette.background}')
 plt.scatter(x, y, c=indices, cmap='viridis', s=15, edgecolors='none')
 plt.axis('equal')
 plt.axis('off')
 plt.show()`,
     render: (ctx) => {
-      const { ctx: c, width, height, time, params, sampleColor } = ctx;
+      const { ctx: c, width, height, time, params, sampleColor, mode, audio } = ctx;
       const count = params.count ?? 1000;
       const divergenceDeg = params.divergence ?? 137.51;
       const baseSeed = params.seedSize ?? 4.5;
@@ -352,18 +298,16 @@ plt.show()`,
       const spacing = Math.min(width, height) * 0.013;
       const cx = width / 2;
       const cy = height / 2;
+      // Treble swells the seeds.
+      const seedPulse = 1 + (audio?.treble ?? 0) * 0.6;
 
       for (let i = 0; i < count; i++) {
         const theta = i * goldenAngle;
         const r = Math.sqrt(i) * spacing;
         const px = cx + r * Math.cos(theta);
         const py = cy + r * Math.sin(theta);
-
         const tColor = (i / count + time * 0.08) % 1;
-        c.fillStyle = sampleColor(tColor);
-        c.beginPath();
-        c.arc(px, py, Math.max(1.5, baseSeed * (0.4 + 0.6 * (i / count))), 0, Math.PI * 2);
-        c.fill();
+        fillCircle(c, px, py, Math.max(1.5, baseSeed * (0.4 + 0.6 * (i / count))) * seedPulse, mode, sampleColor(tColor));
       }
     },
   },
@@ -381,9 +325,9 @@ plt.show()`,
       { id: 'pulsing', name: 'Harmonic Pulse', min: 0, max: 0.2, step: 0.02, defaultValue: 0.08 },
     ],
     defaultParameters: { scale: 180, pulsing: 0.08 },
-    pythonCode: (params, paletteName) => `"""
+    pythonCode: (params, palette) => `"""
 Metatron's Cube Geometry
-Palette: ${paletteName}
+Palette: ${palette.name}
 """
 import numpy as np
 import matplotlib.pyplot as plt
@@ -395,15 +339,15 @@ for ring, count in [(R/2, 6), (R, 6)]:
         ang = i * np.pi / 3
         centers.append((ring * np.cos(ang), ring * np.sin(ang)))
 
-fig, ax = plt.subplots(figsize=(8, 8), facecolor='#090a15')
+fig, ax = plt.subplots(figsize=(8, 8), facecolor='${palette.background}')
 for i in range(len(centers)):
     for j in range(i + 1, len(centers)):
-        ax.plot([centers[i][0], centers[j][0]], [centers[i][1], centers[j][1]], color='#ec4899', lw=0.6)
+        ax.plot([centers[i][0], centers[j][0]], [centers[i][1], centers[j][1]], color='${palette.accent}', lw=0.6)
 ax.axis('equal')
 ax.axis('off')
 plt.show()`,
     render: (ctx) => {
-      const { ctx: c, width, height, time, params, sampleColor } = ctx;
+      const { ctx: c, width, height, time, params, sampleColor, mode } = ctx;
       const pulse = 1 + (params.pulsing ?? 0.08) * Math.sin(time * 2);
       const baseR = (params.scale ?? 180) * (Math.min(width, height) / 550) * pulse;
       const cx = width / 2;
@@ -413,37 +357,26 @@ plt.show()`,
 
       // 13 fruit of life centers
       const centers: { x: number; y: number }[] = [{ x: cx, y: cy }];
-
-      // Inner ring of 6
       for (let i = 0; i < 6; i++) {
         const ang = (i * Math.PI) / 3 + rot;
         centers.push({ x: cx + (baseR * 0.5) * Math.cos(ang), y: cy + (baseR * 0.5) * Math.sin(ang) });
       }
-      // Outer ring of 6
       for (let i = 0; i < 6; i++) {
         const ang = (i * Math.PI) / 3 + rot;
         centers.push({ x: cx + baseR * Math.cos(ang), y: cy + baseR * Math.sin(ang) });
       }
 
-      // Draw all connecting lines
-      c.lineWidth = 0.8;
+      // All connecting lines
       for (let i = 0; i < centers.length; i++) {
         for (let j = i + 1; j < centers.length; j++) {
-          c.beginPath();
-          c.moveTo(centers[i].x, centers[i].y);
-          c.lineTo(centers[j].x, centers[j].y);
-          c.strokeStyle = sampleColor((i * 13 + j * 7) / 100);
-          c.stroke();
+          const color = sampleColor((i * 13 + j * 7) / 100);
+          drawPath(c, [centers[i], centers[j]], mode, () => color, 0.8);
         }
       }
 
-      // Draw circles at each center
-      c.lineWidth = 1.4;
+      // Circles at each center
       for (let i = 0; i < centers.length; i++) {
-        c.beginPath();
-        c.arc(centers[i].x, centers[i].y, baseR * 0.25, 0, Math.PI * 2);
-        c.strokeStyle = sampleColor((i / centers.length + time * 0.1) % 1);
-        c.stroke();
+        strokeCircle(c, centers[i].x, centers[i].y, baseR * 0.25, mode, sampleColor((i / centers.length + time * 0.1) % 1), 1.4);
       }
     },
   },
@@ -461,9 +394,9 @@ plt.show()`,
       { id: 'multiplier', name: 'Multiplier (m)', min: 2, max: 20, step: 0.1, defaultValue: 2.0 },
     ],
     defaultParameters: { modulo: 250, multiplier: 2.0 },
-    pythonCode: (params, paletteName) => `"""
+    pythonCode: (params, palette) => `"""
 Modular Multiplication Cardioid Caustic
-Palette: ${paletteName}
+Palette: ${palette.name}
 """
 import numpy as np
 import matplotlib.pyplot as plt
@@ -473,16 +406,16 @@ m = ${params.multiplier}
 theta = np.linspace(0, 2 * np.pi, N, endpoint=False)
 pts = np.column_stack((np.cos(theta), np.sin(theta)))
 
-fig, ax = plt.subplots(figsize=(8, 8), facecolor='#090a15')
+fig, ax = plt.subplots(figsize=(8, 8), facecolor='${palette.background}')
 for i in range(N):
     target = int((i * m) % N)
-    ax.plot([pts[i, 0], pts[target, 0]], [pts[i, 1], pts[target, 1]], color='#ffd43b', lw=0.5)
+    ax.plot([pts[i, 0], pts[target, 0]], [pts[i, 1], pts[target, 1]], color='${palette.highlight}', lw=0.5)
 
 ax.axis('equal')
 ax.axis('off')
 plt.show()`,
     render: (ctx) => {
-      const { ctx: c, width, height, time, params, sampleColor } = ctx;
+      const { ctx: c, width, height, time, params, sampleColor, mode } = ctx;
       const N = Math.floor(params.modulo ?? 250);
       const mult = (params.multiplier ?? 2.0) + Math.sin(time * 0.3) * 0.8;
 
@@ -490,29 +423,17 @@ plt.show()`,
       const cx = width / 2;
       const cy = height / 2;
 
-      // Circle perimeter
-      c.beginPath();
-      c.arc(cx, cy, R, 0, Math.PI * 2);
-      c.strokeStyle = sampleColor(0.2);
-      c.lineWidth = 1.0;
-      c.stroke();
+      strokeCircle(c, cx, cy, R, mode, sampleColor(0.2), 1.0);
 
-      c.lineWidth = 0.7;
       for (let i = 0; i < N; i++) {
         const theta1 = (i * Math.PI * 2) / N;
         const target = (i * mult) % N;
         const theta2 = (target * Math.PI * 2) / N;
-
-        const x1 = cx + R * Math.cos(theta1);
-        const y1 = cy + R * Math.sin(theta1);
-        const x2 = cx + R * Math.cos(theta2);
-        const y2 = cy + R * Math.sin(theta2);
-
-        c.beginPath();
-        c.moveTo(x1, y1);
-        c.lineTo(x2, y2);
-        c.strokeStyle = sampleColor((i / N + time * 0.08) % 1);
-        c.stroke();
+        const color = sampleColor((i / N + time * 0.08) % 1);
+        drawPath(c, [
+          { x: cx + R * Math.cos(theta1), y: cy + R * Math.sin(theta1) },
+          { x: cx + R * Math.cos(theta2), y: cy + R * Math.sin(theta2) },
+        ], mode, () => color, 0.7);
       }
     },
   },
@@ -531,9 +452,9 @@ plt.show()`,
       { id: 'waveFreq', name: 'Wave Frequency', min: 1, max: 8, step: 0.5, defaultValue: 3 },
     ],
     defaultParameters: { arms: 6, tightness: 5.5, waveFreq: 3 },
-    pythonCode: (params, paletteName) => `"""
+    pythonCode: (params, palette) => `"""
 Dual Archimedean Vortex
-Palette: ${paletteName}
+Palette: ${palette.name}
 """
 import numpy as np
 import matplotlib.pyplot as plt
@@ -542,7 +463,7 @@ arms = ${params.arms}
 b = ${params.tightness}
 theta = np.linspace(0, 8 * np.pi, 1500)
 
-plt.figure(figsize=(8, 8), facecolor='#090a15')
+plt.figure(figsize=(8, 8), facecolor='${palette.background}')
 for arm in range(arms):
     offset = arm * 2 * np.pi / arms
     r = b * theta
@@ -554,7 +475,7 @@ plt.axis('equal')
 plt.axis('off')
 plt.show()`,
     render: (ctx) => {
-      const { ctx: c, width, height, time, params, sampleColor } = ctx;
+      const { ctx: c, width, height, time, params, sampleColor, mode } = ctx;
       const arms = Math.floor(params.arms ?? 6);
       const b = params.tightness ?? 5.5;
       const freq = params.waveFreq ?? 3;
@@ -563,27 +484,18 @@ plt.show()`,
       const cy = height / 2;
       const maxR = Math.min(width, height) * 0.44;
 
-      c.lineWidth = 1.6;
-
       for (let arm = 0; arm < arms; arm++) {
         const armOffset = (arm * Math.PI * 2) / arms + time * 0.3;
-        c.beginPath();
-
-        const pts = 300;
-        for (let i = 0; i < pts; i++) {
-          const t = (i / pts) * (Math.PI * 6);
+        const color = sampleColor((arm / arms + time * 0.1) % 1);
+        const pts: { x: number; y: number }[] = [];
+        const count = 300;
+        for (let i = 0; i < count; i++) {
+          const t = (i / count) * (Math.PI * 6);
           const r = Math.min((t * b * 5), maxR) * (1 + 0.1 * Math.sin(t * freq - time * 3));
           const angle = t + armOffset;
-
-          const px = cx + r * Math.cos(angle);
-          const py = cy + r * Math.sin(angle);
-
-          if (i === 0) c.moveTo(px, py);
-          else c.lineTo(px, py);
+          pts.push({ x: cx + r * Math.cos(angle), y: cy + r * Math.sin(angle) });
         }
-
-        c.strokeStyle = sampleColor((arm / arms + time * 0.1) % 1);
-        c.stroke();
+        drawPath(c, pts, mode, () => color, 1.6);
       }
     },
   },

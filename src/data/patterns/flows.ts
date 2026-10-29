@@ -3,7 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { PatternDefinition } from '../../types/visualizer';
+import { PatternDefinition, RenderContext } from '../../types/visualizer';
+import { drawPath, fillCell, fillCircle, strokeCircle } from '../../utils/drawModes';
 
 export const FLOW_PATTERNS: PatternDefinition[] = [
   {
@@ -20,9 +21,9 @@ export const FLOW_PATTERNS: PatternDefinition[] = [
       { id: 'noiseScale', name: 'Noise Spatial Frequency', min: 0.002, max: 0.015, step: 0.001, defaultValue: 0.005 },
     ],
     defaultParameters: { particles: 2000, noiseScale: 0.005 },
-    pythonCode: (params, paletteName) => `"""
+    pythonCode: (params, palette) => `"""
 Perlin Flow Field in Python
-Palette: ${paletteName}
+Palette: ${palette.name}
 """
 import numpy as np
 import matplotlib.pyplot as plt
@@ -31,7 +32,7 @@ N = ${params.particles}
 scale = ${params.noiseScale}
 print(f"Tracing {N} streamlines through noise field...")
 `,
-    render: (() => {
+    ...(() => {
       interface P {
         x: number;
         y: number;
@@ -41,8 +42,8 @@ print(f"Tracing {N} streamlines through noise field...")
       }
       let parts: P[] = [];
 
-      return (ctx) => {
-        const { ctx: c, width, height, time, params, sampleColor } = ctx;
+      const render = (ctx: RenderContext) => {
+        const { ctx: c, width, height, time, params, sampleColor, mode } = ctx;
         const count = params.particles ?? 2000;
         const scale = params.noiseScale ?? 0.005;
 
@@ -59,7 +60,6 @@ print(f"Tracing {N} streamlines through noise field...")
           }
         }
 
-        c.lineWidth = 1.0;
         for (let i = 0; i < parts.length; i++) {
           const p = parts[i];
           const prevX = p.x;
@@ -82,13 +82,12 @@ print(f"Tracing {N} streamlines through noise field...")
             continue;
           }
 
-          c.beginPath();
-          c.moveTo(prevX, prevY);
-          c.lineTo(p.x, p.y);
-          c.strokeStyle = sampleColor((p.age / 150 + time * 0.05) % 1);
-          c.stroke();
+          const color = sampleColor((p.age / 150 + time * 0.05) % 1);
+          drawPath(c, [{ x: prevX, y: prevY }, { x: p.x, y: p.y }], mode, () => color, 1.0);
         }
       };
+      const reset = () => { parts = []; };
+      return { render, reset };
     })(),
   },
   {
@@ -108,9 +107,9 @@ print(f"Tracing {N} streamlines through noise field...")
       { id: 'pts', name: 'Point Density', min: 4000, max: 20000, step: 2000, defaultValue: 10000 },
     ],
     defaultParameters: { a: -1.4, b: 1.6, c: 1.0, d: 0.7, pts: 10000 },
-    pythonCode: (params, paletteName) => `"""
+    pythonCode: (params, palette) => `"""
 Clifford Attractor
-Palette: ${paletteName}
+Palette: ${palette.name}
 """
 import numpy as np
 import matplotlib.pyplot as plt
@@ -127,17 +126,17 @@ for _ in range(N):
     xs.append(x)
     ys.append(y)
 
-plt.figure(figsize=(8, 8), facecolor='#090a15')
+plt.figure(figsize=(8, 8), facecolor='${palette.background}')
 plt.scatter(xs, ys, s=0.1, c=xs, cmap='plasma')
 plt.axis('off')
 plt.show()`,
     render: (ctx) => {
-      const { ctx: c, width, height, time, params, sampleColor } = ctx;
+      const { ctx: c, width, height, time, params, sampleColor, mode } = ctx;
       const a = (params.a ?? -1.4) + Math.sin(time * 0.2) * 0.1;
       const b = (params.b ?? 1.6) + Math.cos(time * 0.15) * 0.1;
       const cP = params.c ?? 1.0;
       const d = params.d ?? 0.7;
-      const count = Math.min(params.pts ?? 10000, 16000);
+      const count = Math.min(params.pts ?? 10000, 20000);
 
       const scale = Math.min(width, height) * 0.18;
       const cx = width / 2;
@@ -155,8 +154,7 @@ plt.show()`,
         const px = cx + x * scale;
         const py = cy + y * scale;
 
-        c.fillStyle = sampleColor(((x + y) * 0.2 + time * 0.05) % 1);
-        c.fillRect(px, py, 1.2, 1.2);
+        fillCell(c, px, py, 1.2, mode, sampleColor(((x + y) * 0.2 + time * 0.05) % 1));
       }
     },
   },
@@ -176,9 +174,9 @@ plt.show()`,
       { id: 'd', name: 'Parameter d', min: -3, max: 3, step: 0.1, defaultValue: -2.1 },
     ],
     defaultParameters: { a: 1.4, b: -2.3, c: 2.4, d: -2.1 },
-    pythonCode: (params, paletteName) => `"""
+    pythonCode: (params, palette) => `"""
 Peter de Jong Attractor
-Palette: ${paletteName}
+Palette: ${palette.name}
 """
 import numpy as np
 import matplotlib.pyplot as plt
@@ -199,7 +197,7 @@ plt.scatter(xs, ys, s=0.1, c=ys, cmap='magma')
 plt.axis('off')
 plt.show()`,
     render: (ctx) => {
-      const { ctx: c, width, height, time, params, sampleColor } = ctx;
+      const { ctx: c, width, height, time, params, sampleColor, mode } = ctx;
       const a = (params.a ?? 1.4) + Math.sin(time * 0.15) * 0.08;
       const b = params.b ?? -2.3;
       const cP = params.c ?? 2.4;
@@ -222,8 +220,7 @@ plt.show()`,
         const px = cx + x * scale;
         const py = cy + y * scale;
 
-        c.fillStyle = sampleColor(((x * y) * 0.25 + 0.5 + time * 0.05) % 1);
-        c.fillRect(px, py, 1.2, 1.2);
+        fillCell(c, px, py, 1.2, mode, sampleColor(((x * y) * 0.25 + 0.5 + time * 0.05) % 1));
       }
     },
   },
@@ -240,12 +237,12 @@ plt.show()`,
       { id: 'a', name: 'Parameter a', min: -3, max: 3, step: 0.1, defaultValue: 1.4 },
       { id: 'b', name: 'Parameter b', min: -3, max: 3, step: 0.1, defaultValue: 1.56 },
       { id: 'c', name: 'Parameter c', min: -3, max: 3, step: 0.1, defaultValue: 1.4 },
-      { id: 'd', name: 'Parameter d', min: -3, max: 3, step: 0.1, defaultValue: -6.56 },
+      { id: 'd', name: 'Parameter d', min: -8, max: 8, step: 0.1, defaultValue: -6.56 },
     ],
     defaultParameters: { a: 1.4, b: 1.56, c: 1.4, d: -6.56 },
-    pythonCode: (params, paletteName) => `"""
+    pythonCode: (params, palette) => `"""
 Svensson Attractor
-Palette: ${paletteName}
+Palette: ${palette.name}
 """
 import numpy as np
 import matplotlib.pyplot as plt
@@ -266,7 +263,7 @@ plt.scatter(xs, ys, s=0.2, c=xs, cmap='viridis')
 plt.axis('off')
 plt.show()`,
     render: (ctx) => {
-      const { ctx: c, width, height, time, params, sampleColor } = ctx;
+      const { ctx: c, width, height, time, params, sampleColor, mode } = ctx;
       const a = params.a ?? 1.4;
       const b = (params.b ?? 1.56) + Math.sin(time * 0.2) * 0.05;
       const cP = params.c ?? 1.4;
@@ -289,8 +286,7 @@ plt.show()`,
         const px = cx + x * scale;
         const py = cy + y * scale;
 
-        c.fillStyle = sampleColor(((x + y) * 0.1 + time * 0.05) % 1);
-        c.fillRect(px, py, 1.2, 1.2);
+        fillCell(c, px, py, 1.2, mode, sampleColor(((x + y) * 0.1 + time * 0.05) % 1));
       }
     },
   },
@@ -308,9 +304,9 @@ plt.show()`,
       { id: 'rotSpeed', name: 'Rotation Rate', min: 0.1, max: 1.5, step: 0.1, defaultValue: 0.5 },
     ],
     defaultParameters: { steps: 3000, rotSpeed: 0.5 },
-    pythonCode: (params, paletteName) => `"""
+    pythonCode: (params, palette) => `"""
 Aizawa Attractor
-Palette: ${paletteName}
+Palette: ${palette.name}
 """
 import numpy as np
 import matplotlib.pyplot as plt
@@ -327,12 +323,12 @@ def aizawa(state, t):
 
 t = np.linspace(0, 50, ${params.steps})
 res = odeint(aizawa, [0.1, 0, 0], t)
-plt.plot(res[:, 0], res[:, 1], lw=0.6, color='#ec4899')
+plt.plot(res[:, 0], res[:, 1], lw=0.6, color='${palette.accent}')
 plt.axis('off')
 plt.show()`,
     render: (ctx) => {
-      const { ctx: c, width, height, time, params, sampleColor } = ctx;
-      const count = Math.min(params.steps ?? 3000, 4000);
+      const { ctx: c, width, height, time, params, sampleColor, mode } = ctx;
+      const count = Math.min(params.steps ?? 3000, 5000);
       const rot = time * (params.rotSpeed ?? 0.5);
 
       const a = 0.95, b = 0.7, cP = 0.6, d = 3.5, e = 0.25, f = 0.1;
@@ -346,9 +342,7 @@ plt.show()`,
       const cosR = Math.cos(rot);
       const sinR = Math.sin(rot);
 
-      c.lineWidth = 1.2;
-      let prevPx = 0, prevPy = 0;
-
+      const pts: { x: number; y: number }[] = [];
       for (let i = 0; i < count; i++) {
         const dx = (z - b) * x - d * y;
         const dy = d * x + (z - b) * y;
@@ -361,19 +355,9 @@ plt.show()`,
         const rx = x * cosR - y * sinR;
         const ry = (x * sinR + y * cosR) * 0.5 + z * 0.8;
 
-        const px = cx + rx * scale;
-        const py = cy - ry * scale;
-
-        if (i > 2) {
-          c.beginPath();
-          c.moveTo(prevPx, prevPy);
-          c.lineTo(px, py);
-          c.strokeStyle = sampleColor((i / count + time * 0.1) % 1);
-          c.stroke();
-        }
-        prevPx = px;
-        prevPy = py;
+        pts.push({ x: cx + rx * scale, y: cy - ry * scale });
       }
+      drawPath(c, pts, mode, (t) => sampleColor((t + time * 0.1) % 1), 1.2);
     },
   },
   {
@@ -389,9 +373,9 @@ plt.show()`,
       { id: 'b', name: 'Damping Parameter b', min: 0.15, max: 0.25, step: 0.01, defaultValue: 0.208186 },
     ],
     defaultParameters: { b: 0.208186 },
-    pythonCode: (params, paletteName) => `"""
+    pythonCode: (params, palette) => `"""
 Thomas Symmetric Attractor
-Palette: ${paletteName}
+Palette: ${palette.name}
 """
 import numpy as np
 import matplotlib.pyplot as plt
@@ -404,11 +388,11 @@ def thomas(state, t):
 
 t = np.linspace(0, 100, 3000)
 sol = odeint(thomas, [1.1, 1.1, -0.01], t)
-plt.plot(sol[:, 0], sol[:, 1], lw=0.6, color='#ffd866')
+plt.plot(sol[:, 0], sol[:, 1], lw=0.6, color='${palette.highlight}')
 plt.axis('off')
 plt.show()`,
     render: (ctx) => {
-      const { ctx: c, width, height, time, params, sampleColor } = ctx;
+      const { ctx: c, width, height, time, params, sampleColor, mode } = ctx;
       const b = params.b ?? 0.208186;
       const dt = 0.04;
 
@@ -421,10 +405,8 @@ plt.show()`,
       const cosR = Math.cos(rot);
       const sinR = Math.sin(rot);
 
-      c.lineWidth = 1.3;
-      let prevPx = 0, prevPy = 0;
       const steps = 3000;
-
+      const pts: { x: number; y: number }[] = [];
       for (let i = 0; i < steps; i++) {
         const dx = Math.sin(y) - b * x;
         const dy = Math.sin(z) - b * y;
@@ -437,19 +419,9 @@ plt.show()`,
         const rx = x * cosR - z * sinR;
         const ry = y * 0.8 + (x * sinR + z * cosR) * 0.4;
 
-        const px = cx + rx * scale;
-        const py = cy + ry * scale;
-
-        if (i > 2) {
-          c.beginPath();
-          c.moveTo(prevPx, prevPy);
-          c.lineTo(px, py);
-          c.strokeStyle = sampleColor((i / steps + time * 0.08) % 1);
-          c.stroke();
-        }
-        prevPx = px;
-        prevPy = py;
+        pts.push({ x: cx + rx * scale, y: cy + ry * scale });
       }
+      drawPath(c, pts, mode, (t) => sampleColor((t + time * 0.08) % 1), 1.3);
     },
   },
   {
@@ -465,9 +437,9 @@ plt.show()`,
       { id: 'vortices', name: 'Vortex Count', min: 6, max: 18, step: 2, defaultValue: 12 },
     ],
     defaultParameters: { vortices: 12 },
-    pythonCode: (params, paletteName) => `"""
+    pythonCode: (palette) => `"""
 Von Kármán Vortex Street
-Palette: ${paletteName}
+Palette: ${palette.name}
 """
 import numpy as np
 import matplotlib.pyplot as plt
@@ -475,15 +447,12 @@ import matplotlib.pyplot as plt
 print("Simulating alternating vortex street shedding downstream...")
 `,
     render: (ctx) => {
-      const { ctx: c, width, height, time, sampleColor } = ctx;
+      const { ctx: c, width, height, time, sampleColor, mode } = ctx;
       const cy = height / 2;
       const obsX = width * 0.2;
 
       // Obstacle cylinder
-      c.fillStyle = sampleColor(0.85);
-      c.beginPath();
-      c.arc(obsX, cy, 18, 0, Math.PI * 2);
-      c.fill();
+      fillCircle(c, obsX, cy, 18, mode, sampleColor(0.85));
 
       // Vortex stream
       const count = 12;
@@ -494,11 +463,7 @@ print("Simulating alternating vortex street shedding downstream...")
         const y = cy + sign * 35 * (1 + (x - obsX) / width);
 
         const radius = 25 * (1 + (x - obsX) / (width * 0.8));
-        c.lineWidth = 1.4;
-        c.beginPath();
-        c.arc(x, y, radius, 0, Math.PI * 2);
-        c.strokeStyle = sampleColor((i / count + time * 0.1) % 1);
-        c.stroke();
+        strokeCircle(c, x, y, radius, mode, sampleColor((i / count + time * 0.1) % 1), 1.4);
       }
     },
   },
@@ -515,9 +480,9 @@ print("Simulating alternating vortex street shedding downstream...")
       { id: 'particles', name: 'Branch Nodes', min: 500, max: 2500, step: 250, defaultValue: 1200 },
     ],
     defaultParameters: { particles: 1200 },
-    pythonCode: (params, paletteName) => `"""
+    pythonCode: (palette) => `"""
 Diffusion-Limited Aggregation in Python
-Palette: ${paletteName}
+Palette: ${palette.name}
 """
 import numpy as np
 import matplotlib.pyplot as plt
@@ -525,12 +490,10 @@ import matplotlib.pyplot as plt
 print("Simulating Brownian random walk particle aggregation...")
 `,
     render: (ctx) => {
-      const { ctx: c, width, height, time, params, sampleColor } = ctx;
+      const { ctx: c, width, height, time, params, sampleColor, mode } = ctx;
       const nodes = params.particles ?? 1200;
       const cx = width / 2;
       const cy = height / 2;
-
-      c.lineWidth = 1.2;
 
       // Deterministic beautiful DLA-like radial dendritic tree
       const branches = 8;
@@ -540,27 +503,27 @@ print("Simulating Brownian random walk particle aggregation...")
         let y = cy;
         let angle = baseAngle;
 
-        c.beginPath();
-        c.moveTo(x, y);
-
+        const chain: { x: number; y: number }[] = [{ x, y }];
+        const subs: { x: number; y: number }[][] = [];
         const steps = Math.floor(nodes / branches);
-        for (let s = 0; s < steps; s++) {
-          angle += (Math.sin(s * 0.2 + b) * 0.3) + Math.cos(time + s * 0.1) * 0.05;
+        for (let s2 = 0; s2 < steps; s2++) {
+          angle += (Math.sin(s2 * 0.2 + b) * 0.3) + Math.cos(time + s2 * 0.1) * 0.05;
           const stepSize = 3;
           x += Math.cos(angle) * stepSize;
           y += Math.sin(angle) * stepSize;
-          c.lineTo(x, y);
+          chain.push({ x, y });
 
           // Sub-branches
-          if (s % 15 === 0) {
-            const subAngle = angle + (s % 2 === 0 ? 0.8 : -0.8);
-            c.moveTo(x, y);
-            c.lineTo(x + Math.cos(subAngle) * 20, y + Math.sin(subAngle) * 20);
-            c.moveTo(x, y);
+          if (s2 % 15 === 0) {
+            const subAngle = angle + (s2 % 2 === 0 ? 0.8 : -0.8);
+            subs.push([{ x, y }, { x: x + Math.cos(subAngle) * 20, y: y + Math.sin(subAngle) * 20 }]);
           }
         }
-        c.strokeStyle = sampleColor((b / branches + time * 0.05) % 1);
-        c.stroke();
+        const color = sampleColor((b / branches + time * 0.05) % 1);
+        drawPath(c, chain, mode, () => color, 1.2);
+        for (const seg of subs) {
+          drawPath(c, seg, mode, () => color, 1.2);
+        }
       }
     },
   },

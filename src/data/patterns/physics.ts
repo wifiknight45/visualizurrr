@@ -3,7 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { PatternDefinition } from '../../types/visualizer';
+import { PatternDefinition, RenderContext } from '../../types/visualizer';
+import { drawPath, fillCell, fillCircle, strokeCircle } from '../../utils/drawModes';
 
 export const PHYSICS_PATTERNS: PatternDefinition[] = [
   {
@@ -21,9 +22,9 @@ export const PHYSICS_PATTERNS: PatternDefinition[] = [
       { id: 'particles', name: 'Sand Particle Count', min: 1000, max: 6000, step: 500, defaultValue: 3000 },
     ],
     defaultParameters: { n: 3, m: 5, particles: 3000 },
-    pythonCode: (params, paletteName) => `"""
+    pythonCode: (params, palette) => `"""
 Chladni Cymatics Plate in Python
-Palette: ${paletteName}
+Palette: ${palette.name}
 """
 import numpy as np
 import matplotlib.pyplot as plt
@@ -36,12 +37,12 @@ X, Y = np.meshgrid(x, y)
 # Chladni 2D wave function
 Z = np.sin(n * np.pi * X) * np.sin(m * np.pi * Y) - np.sin(m * np.pi * X) * np.sin(n * np.pi * Y)
 
-plt.figure(figsize=(8, 8), facecolor='#090a15')
-plt.contour(X, Y, np.abs(Z), levels=[0.05], colors='#00f0ff', linewidths=1.5)
+plt.figure(figsize=(8, 8), facecolor='${palette.background}')
+plt.contour(X, Y, np.abs(Z), levels=[0.05], colors='${palette.primary}', linewidths=1.5)
 plt.axis('off')
 plt.show()`,
     render: (ctx) => {
-      const { ctx: c, width, height, time, params, sampleColor } = ctx;
+      const { ctx: c, width, height, time, params, sampleColor, mode } = ctx;
       const n = params.n ?? 3;
       const m = params.m ?? 5;
       const count = params.particles ?? 3000;
@@ -71,8 +72,7 @@ plt.show()`,
         if (distToNode < 0.25) {
           const px = cx + x * (size / 2);
           const py = cy + y * (size / 2);
-          c.fillStyle = sampleColor(1 - distToNode * 3.5);
-          c.fillRect(px, py, 1.8, 1.8);
+          fillCell(c, px, py, 1.8, mode, sampleColor(1 - distToNode * 3.5));
         }
       }
     },
@@ -91,9 +91,9 @@ plt.show()`,
       { id: 'trailLen', name: 'Trail Persistence', min: 200, max: 1500, step: 100, defaultValue: 800 },
     ],
     defaultParameters: { gravity: 9.81, trailLen: 800 },
-    pythonCode: (params, paletteName) => `"""
+    pythonCode: (params, palette) => `"""
 Double Pendulum Simulation
-Palette: ${paletteName}
+Palette: ${palette.name}
 """
 import numpy as np
 import matplotlib.pyplot as plt
@@ -125,16 +125,16 @@ sol = odeint(derivs, [np.pi/2, 0, np.pi/2, 0], t)
 x2 = L1 * np.sin(sol[:, 0]) + L2 * np.sin(sol[:, 2])
 y2 = -L1 * np.cos(sol[:, 0]) - L2 * np.cos(sol[:, 2])
 
-plt.plot(x2, y2, color='#ff007f', lw=0.8)
+plt.plot(x2, y2, color='${palette.accent}', lw=0.8)
 plt.axis('off')
 plt.show()`,
-    render: (() => {
+    ...(() => {
       let th1 = Math.PI / 2, w1 = 0;
       let th2 = Math.PI / 2 + 0.1, w2 = 0;
       const trail: { x: number; y: number }[] = [];
 
-      return (ctx) => {
-        const { ctx: c, width, height, params, sampleColor } = ctx;
+      const render = (ctx: RenderContext) => {
+        const { ctx: c, width, height, params, sampleColor, mode } = ctx;
         const g = (params.gravity ?? 9.81) * 0.05;
         const maxTrail = params.trailLen ?? 800;
 
@@ -171,34 +171,14 @@ plt.show()`,
         trail.push({ x: x2, y: y2 });
         if (trail.length > maxTrail) trail.shift();
 
-        // Draw trail
-        c.lineWidth = 1.3;
-        for (let i = 1; i < trail.length; i++) {
-          c.beginPath();
-          c.moveTo(trail[i - 1].x, trail[i - 1].y);
-          c.lineTo(trail[i].x, trail[i].y);
-          c.strokeStyle = sampleColor(i / trail.length);
-          c.stroke();
-        }
-
-        // Draw pendulum arms
-        c.lineWidth = 2.5;
-        c.strokeStyle = sampleColor(0.8);
-        c.beginPath();
-        c.moveTo(cx, cy);
-        c.lineTo(x1, y1);
-        c.lineTo(x2, y2);
-        c.stroke();
-
-        // Draw bobs
-        c.fillStyle = sampleColor(0.95);
-        c.beginPath();
-        c.arc(x1, y1, 6, 0, Math.PI * 2);
-        c.fill();
-        c.beginPath();
-        c.arc(x2, y2, 8, 0, Math.PI * 2);
-        c.fill();
+        // Draw trail, arms and bobs through the render-mode helpers
+        drawPath(c, trail, mode, (t) => sampleColor(t), 1.3);
+        drawPath(c, [{ x: cx, y: cy }, { x: x1, y: y1 }, { x: x2, y: y2 }], mode, () => sampleColor(0.8), 2.5);
+        fillCircle(c, x1, y1, 6, mode, sampleColor(0.95));
+        fillCircle(c, x2, y2, 8, mode, sampleColor(0.95));
       };
+      const reset = () => { th1 = Math.PI / 2; w1 = 0; th2 = Math.PI / 2 + 0.1; w2 = 0; trail.length = 0; };
+      return { render, reset };
     })(),
   },
   {
@@ -215,9 +195,9 @@ plt.show()`,
       { id: 'speed', name: 'Rotation Rate', min: 0.2, max: 2, step: 0.1, defaultValue: 0.8 },
     ],
     defaultParameters: { harmonics: 9, speed: 0.8 },
-    pythonCode: (params, paletteName) => `"""
+    pythonCode: (params, palette) => `"""
 Fourier Epicycles in Python
-Palette: ${paletteName}
+Palette: ${palette.name}
 """
 import numpy as np
 import matplotlib.pyplot as plt
@@ -229,17 +209,18 @@ signal = np.zeros_like(t)
 for k in range(1, N*2, 2):
     signal += (4 / (k * np.pi)) * np.sin(k * t)
 
-plt.figure(figsize=(10, 5), facecolor='#090a15')
-plt.plot(t, signal, color='#00f0ff', lw=2)
+plt.figure(figsize=(10, 5), facecolor='${palette.background}')
+plt.plot(t, signal, color='${palette.primary}', lw=2)
 plt.axis('off')
 plt.show()`,
-    render: (() => {
+    ...(() => {
       const pathHistory: number[] = [];
 
-      return (ctx) => {
-        const { ctx: c, width, height, time, params, sampleColor } = ctx;
+      const render = (ctx: RenderContext) => {
+        const { ctx: c, width, height, time, params, sampleColor, mode, audio } = ctx;
         const harmonics = Math.floor(params.harmonics ?? 9);
-        const rate = (params.speed ?? 0.8) * 1.5;
+        // Bass gently pushes the rotation rate while music plays
+        const rate = (params.speed ?? 0.8) * 1.5 * (1 + (audio?.bass ?? 0) * 0.25);
 
         const baseR = Math.min(width, height) * 0.18;
         const cx = width * 0.3;
@@ -260,43 +241,22 @@ plt.show()`,
           x += radius * Math.cos(angle);
           y += radius * Math.sin(angle);
 
-          // Draw circle
-          c.beginPath();
-          c.arc(prevX, prevY, radius, 0, Math.PI * 2);
-          c.strokeStyle = sampleColor(i / harmonics);
-          c.stroke();
-
-          // Draw radius line
-          c.beginPath();
-          c.moveTo(prevX, prevY);
-          c.lineTo(x, y);
-          c.strokeStyle = sampleColor(0.85);
-          c.stroke();
+          // Draw circle + radius line through the render-mode helpers
+          strokeCircle(c, prevX, prevY, radius, mode, sampleColor(i / harmonics), 1.0);
+          drawPath(c, [{ x: prevX, y: prevY }, { x, y }], mode, () => sampleColor(0.85), 1.0);
         }
 
         pathHistory.unshift(y);
         if (pathHistory.length > width * 0.5) pathHistory.pop();
 
-        // Line connecting tip to wave
+        // Line connecting tip to wave + wave history
         const waveStartX = width * 0.52;
-        c.beginPath();
-        c.moveTo(x, y);
-        c.lineTo(waveStartX, y);
-        c.strokeStyle = sampleColor(0.9);
-        c.stroke();
-
-        // Wave history
-        c.lineWidth = 2.0;
-        c.beginPath();
-        for (let i = 0; i < pathHistory.length; i++) {
-          const px = waveStartX + i;
-          const py = pathHistory[i];
-          if (i === 0) c.moveTo(px, py);
-          else c.lineTo(px, py);
-        }
-        c.strokeStyle = sampleColor(0.95);
-        c.stroke();
+        drawPath(c, [{ x, y }, { x: waveStartX, y }], mode, () => sampleColor(0.9), 1.0);
+        const wavePts = pathHistory.map((py, i) => ({ x: waveStartX + i, y: py }));
+        drawPath(c, wavePts, mode, () => sampleColor(0.95), 2.0);
       };
+      const reset = () => { pathHistory.length = 0; };
+      return { render, reset };
     })(),
   },
   {
@@ -313,9 +273,9 @@ plt.show()`,
       { id: 'wavelength', name: 'Wavelength (λ)', min: 15, max: 50, step: 2, defaultValue: 28 },
     ],
     defaultParameters: { sources: 3, wavelength: 28 },
-    pythonCode: (params, paletteName) => `"""
+    pythonCode: (params, palette) => `"""
 Wave Interference Ripple
-Palette: ${paletteName}
+Palette: ${palette.name}
 """
 import numpy as np
 import matplotlib.pyplot as plt
@@ -337,7 +297,7 @@ plt.imshow(Z, cmap='viridis')
 plt.axis('off')
 plt.show()`,
     render: (ctx) => {
-      const { ctx: c, width, height, time, params, sampleColor } = ctx;
+      const { ctx: c, width, height, time, params, sampleColor, mode } = ctx;
       const srcCount = Math.floor(params.sources ?? 3);
       const lambda = params.wavelength ?? 28;
       const k = (Math.PI * 2) / lambda;
@@ -371,8 +331,7 @@ plt.show()`,
           }
 
           const norm = (amp / srcCount + 1) * 0.5;
-          c.fillStyle = sampleColor(norm);
-          c.fillRect(px, py, step, step);
+          fillCell(c, px, py, step, mode, sampleColor(norm));
         }
       }
     },
@@ -391,9 +350,9 @@ plt.show()`,
       { id: 'wellWidth', name: 'Potential Well Scale', min: 100, max: 300, step: 20, defaultValue: 180 },
     ],
     defaultParameters: { nState: 4, wellWidth: 180 },
-    pythonCode: (params, paletteName) => `"""
+    pythonCode: (params, palette) => `"""
 Quantum Harmonic Wavefunctions
-Palette: ${paletteName}
+Palette: ${palette.name}
 """
 import numpy as np
 import matplotlib.pyplot as plt
@@ -405,37 +364,30 @@ Hn = hermite(n)
 psi = (1 / np.sqrt(2**n * np.math.factorial(n) * np.sqrt(np.pi))) * Hn(x) * np.exp(-x**2 / 2)
 prob = psi**2
 
-plt.plot(x, prob, color='#bd93f9', lw=2)
+plt.plot(x, prob, color='${palette.accent}', lw=2)
 plt.axis('off')
 plt.show()`,
     render: (ctx) => {
-      const { ctx: c, width, height, time, params, sampleColor } = ctx;
+      const { ctx: c, width, height, time, params, sampleColor, mode } = ctx;
       const nMax = params.nState ?? 4;
       const well = params.wellWidth ?? 180;
 
       const cx = width / 2;
       const cy = height / 2;
 
-      c.lineWidth = 2.0;
-
       for (let n = 0; n < nMax; n++) {
-        c.beginPath();
-        const pts = 200;
-        for (let i = 0; i <= pts; i++) {
-          const xNorm = ((i / pts) - 0.5) * 6;
+        const pts: { x: number; y: number }[] = [];
+        const divisions = 200;
+        for (let i = 0; i <= divisions; i++) {
+          const xNorm = ((i / divisions) - 0.5) * 6;
           // Approximated Hermite wave packet envelope
           const env = Math.exp(-(xNorm * xNorm) / 2);
           const oscillation = Math.cos(n * xNorm - time * (n + 1) * 1.5);
           const yVal = env * oscillation * (well * 0.5);
 
-          const px = cx + xNorm * (well * 0.35);
-          const py = cy - yVal - (n - nMax / 2) * 50;
-
-          if (i === 0) c.moveTo(px, py);
-          else c.lineTo(px, py);
+          pts.push({ x: cx + xNorm * (well * 0.35), y: cy - yVal - (n - nMax / 2) * 50 });
         }
-        c.strokeStyle = sampleColor(n / nMax);
-        c.stroke();
+        drawPath(c, pts, mode, () => sampleColor(n / nMax), 2.0);
       }
     },
   },
@@ -453,9 +405,9 @@ plt.show()`,
       { id: 'speed', name: 'Propagation Velocity', min: 0.5, max: 3, step: 0.2, defaultValue: 1.5 },
     ],
     defaultParameters: { amplitude: 60, speed: 1.5 },
-    pythonCode: (params, paletteName) => `"""
+    pythonCode: (params, palette) => `"""
 KdV Soliton Wave
-Palette: ${paletteName}
+Palette: ${palette.name}
 """
 import numpy as np
 import matplotlib.pyplot as plt
@@ -465,11 +417,11 @@ c_speed = ${params.speed}
 sech = 1 / np.cosh(0.5 * np.sqrt(c_speed) * x)
 u = (c_speed / 2) * sech**2
 
-plt.plot(x, u, color='#05d9e8', lw=2)
+plt.plot(x, u, color='${palette.primary}', lw=2)
 plt.axis('off')
 plt.show()`,
     render: (ctx) => {
-      const { ctx: c, width, height, time, params, sampleColor } = ctx;
+      const { ctx: c, width, height, time, params, sampleColor, mode } = ctx;
       const amp = params.amplitude ?? 60;
       const v = (params.speed ?? 1.5) * 80;
 
@@ -477,23 +429,15 @@ plt.show()`,
       const cx = width / 2;
       const cy = height / 2;
 
-      c.lineWidth = 1.6;
-
       for (let l = 0; l < lines; l++) {
         const offset = (l - lines / 2) * 22;
-        c.beginPath();
-
+        const pts: { x: number; y: number }[] = [];
         for (let x = 0; x < width; x += 3) {
           const dist = ((x - (time * v + l * 40)) % width + width) % width - cx;
           const sech = 1 / Math.cosh(dist * 0.025);
-          const y = cy + offset - amp * (sech * sech) * Math.cos(l * 0.3);
-
-          if (x === 0) c.moveTo(x, y);
-          else c.lineTo(x, y);
+          pts.push({ x, y: cy + offset - amp * (sech * sech) * Math.cos(l * 0.3) });
         }
-
-        c.strokeStyle = sampleColor(l / lines);
-        c.stroke();
+        drawPath(c, pts, mode, () => sampleColor(l / lines), 1.6);
       }
     },
   },
@@ -510,9 +454,9 @@ plt.show()`,
       { id: 'drag', name: 'Air Damping (γ)', min: 0.1, max: 0.8, step: 0.05, defaultValue: 0.35 },
     ],
     defaultParameters: { drag: 0.35 },
-    pythonCode: (params, paletteName) => `"""
+    pythonCode: (palette) => `"""
 Magnetic Pendulum Basins
-Palette: ${paletteName}
+Palette: ${palette.name}
 """
 import numpy as np
 import matplotlib.pyplot as plt
@@ -522,7 +466,7 @@ magnets = [np.array([np.cos(a), np.sin(a)]) for a in [0, 2*np.pi/3, 4*np.pi/3]]
 print("Simulating 3-magnet fractal attractor...")
 `,
     render: (ctx) => {
-      const { ctx: c, width, height, time, sampleColor } = ctx;
+      const { ctx: c, width, height, time, sampleColor, mode } = ctx;
       const scale = Math.min(width, height) * 0.35;
       const cx = width / 2;
       const cy = height / 2;
@@ -535,24 +479,18 @@ print("Simulating 3-magnet fractal attractor...")
 
       // Draw magnets
       magnets.forEach((m, idx) => {
-        c.fillStyle = sampleColor(idx / 3);
-        c.beginPath();
-        c.arc(m.x, m.y, 12, 0, Math.PI * 2);
-        c.fill();
+        fillCircle(c, m.x, m.y, 12, mode, sampleColor(idx / 3));
       });
 
       // Swarm of trajectories
-      const pts = 80;
-      c.lineWidth = 1.0;
-      for (let i = 0; i < pts; i++) {
+      const ptsCount = 80;
+      for (let i = 0; i < ptsCount; i++) {
         let x = cx + Math.cos(i) * scale * 0.8;
         let y = cy + Math.sin(i) * scale * 0.8;
         let vx = -Math.sin(i) * 2;
         let vy = Math.cos(i) * 2;
 
-        c.beginPath();
-        c.moveTo(x, y);
-
+        const traj: { x: number; y: number }[] = [{ x, y }];
         for (let step = 0; step < 40; step++) {
           let fx = -0.15 * (x - cx);
           let fy = -0.15 * (y - cy);
@@ -570,10 +508,10 @@ print("Simulating 3-magnet fractal attractor...")
           vy = (vy + fy * 0.1) * 0.96;
           x += vx;
           y += vy;
-          c.lineTo(x, y);
+          traj.push({ x, y });
         }
-        c.strokeStyle = sampleColor((i / pts + time * 0.05) % 1);
-        c.stroke();
+        const color = sampleColor((i / ptsCount + time * 0.05) % 1);
+        drawPath(c, traj, mode, () => color, 1.0);
       }
     },
   },
@@ -591,9 +529,9 @@ print("Simulating 3-magnet fractal attractor...")
       { id: 'gravity', name: 'Gravitational Constant (G)', min: 100, max: 800, step: 50, defaultValue: 400 },
     ],
     defaultParameters: { bodies: 4, gravity: 400 },
-    pythonCode: (params, paletteName) => `"""
+    pythonCode: (params, palette) => `"""
 N-Body Gravitational Ballet
-Palette: ${paletteName}
+Palette: ${palette.name}
 """
 import numpy as np
 import matplotlib.pyplot as plt
@@ -602,7 +540,7 @@ G = ${params.gravity}
 N = ${params.bodies}
 print(f"Integrating {N}-body celestial orbits with G={G}...")
 `,
-    render: (() => {
+    ...(() => {
       interface Body {
         x: number;
         y: number;
@@ -613,8 +551,8 @@ print(f"Integrating {N}-body celestial orbits with G={G}...")
       }
       let bodies: Body[] = [];
 
-      return (ctx) => {
-        const { ctx: c, width, height, params, sampleColor } = ctx;
+      const render = (ctx: RenderContext) => {
+        const { ctx: c, width, height, params, sampleColor, mode } = ctx;
         const count = Math.floor(params.bodies ?? 4);
         const G = params.gravity ?? 400;
 
@@ -662,23 +600,13 @@ print(f"Integrating {N}-body celestial orbits with G={G}...")
           bodies[i].trail.push({ x: bodies[i].x, y: bodies[i].y });
           if (bodies[i].trail.length > 250) bodies[i].trail.shift();
 
-          // Draw trail
-          c.lineWidth = 1.2;
-          for (let t = 1; t < bodies[i].trail.length; t++) {
-            c.beginPath();
-            c.moveTo(bodies[i].trail[t - 1].x, bodies[i].trail[t - 1].y);
-            c.lineTo(bodies[i].trail[t].x, bodies[i].trail[t].y);
-            c.strokeStyle = sampleColor(i / bodies.length);
-            c.stroke();
-          }
-
-          // Draw body
-          c.fillStyle = sampleColor(0.95);
-          c.beginPath();
-          c.arc(bodies[i].x, bodies[i].y, Math.sqrt(bodies[i].mass) * 1.5, 0, Math.PI * 2);
-          c.fill();
+          // Draw trail + body through the render-mode helpers
+          drawPath(c, bodies[i].trail, mode, () => sampleColor(i / bodies.length), 1.2);
+          fillCircle(c, bodies[i].x, bodies[i].y, Math.sqrt(bodies[i].mass) * 1.5, mode, sampleColor(0.95));
         }
       };
+      const reset = () => { bodies = []; };
+      return { render, reset };
     })(),
   },
 ];

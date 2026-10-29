@@ -62,7 +62,7 @@ export const DEFAULT_CHILL_PLAYLISTS: ChillPlaylist[] = [
   {
     id: 'lofi-tokyo-night',
     name: 'Midnight Tokyo Lofi',
-    description: 'Authentic open source lofi beats with warm jazz keys, gentle vinyl flutter, and downtempo groove',
+    description: 'Open source lofi beats with warm jazz keys, gentle vinyl flutter, and downtempo groove',
     tracks: [
       OPEN_SOURCE_LOFI_TRACKS[0],
       OPEN_SOURCE_LOFI_TRACKS[1],
@@ -84,7 +84,7 @@ export const DEFAULT_CHILL_PLAYLISTS: ChillPlaylist[] = [
   {
     id: 'coffee-shop-vinyl',
     name: 'Coffee Shop Vinyl Beats',
-    description: 'Cozy real recordings featuring vintage tape warmth, mellow acoustic basslines, and golden hour chords',
+    description: 'Cozy recordings featuring vintage tape warmth, mellow acoustic basslines, and golden hour chords',
     tracks: [
       OPEN_SOURCE_LOFI_TRACKS[2],
       OPEN_SOURCE_LOFI_TRACKS[3],
@@ -110,10 +110,13 @@ class LofiAudioEngine {
   private trackIndex: number = 0;
 
   private freqData: Uint8Array = new Uint8Array(128);
-  private morphIntervalTimer: number | null = null;
+  private prevFreqData: Uint8Array | null = null;
+  private fluxAvg = 0;
+  private lastBeatAt = 0;
+  private metricsCache: AudioMetrics | null = null;
+  private metricsCacheAt = 0;
 
   // Callbacks
-  private onMorphCallbacks: Array<(track: ChillTrack) => void> = [];
   private onTrackChangeCallbacks: Array<(track: ChillTrack) => void> = [];
 
   public init() {
@@ -125,9 +128,13 @@ class LofiAudioEngine {
       this.ctx = new AudioCtx();
 
       this.analyser = this.ctx.createAnalyser();
-      this.analyser.fftSize = 256;
+      // 2048 gives ~23 Hz per bin at 48 kHz, so band edges can be defined
+      // in Hz instead of as fractions of the spectrum (at fftSize 256 the
+      // old "bass" band actually spanned 0-2.8 kHz).
+      this.analyser.fftSize = 2048;
       this.analyser.smoothingTimeConstant = 0.85;
       this.freqData = new Uint8Array(this.analyser.frequencyBinCount);
+      this.prevFreqData = new Uint8Array(this.analyser.frequencyBinCount);
 
       this.masterGain = this.ctx.createGain();
       this.masterGain.gain.setValueAtTime(this.volume, this.ctx.currentTime);
@@ -157,6 +164,14 @@ class LofiAudioEngine {
         this.nextTrack();
       });
 
+      // Keep isPlaying in sync with the element's real state
+      this.audioElement.addEventListener('play', () => {
+        this.isPlaying = true;
+      });
+      this.audioElement.addEventListener('pause', () => {
+        this.isPlaying = false;
+      });
+
       // Handle any loading error by gracefully moving to next track
       this.audioElement.addEventListener('error', (e) => {
         console.warn('Audio playback error, attempting fallback track:', e);
@@ -184,7 +199,6 @@ class LofiAudioEngine {
         }
         await this.audioElement.play();
         this.isPlaying = true;
-        this.startMorphTimer();
       } catch (e) {
         console.warn('AudioElement play failed:', e);
         this.isPlaying = false;
@@ -197,15 +211,15 @@ class LofiAudioEngine {
     if (this.audioElement) {
       this.audioElement.pause();
     }
-    this.stopMorphTimer();
   }
 
-  public toggle(): void {
+  public async toggle(): Promise<boolean> {
     if (this.isPlaying) {
       this.pause();
     } else {
-      void this.play();
+      await this.play();
     }
+    return this.isPlaying;
   }
 
   public setVolume(vol: number): void {
@@ -231,13 +245,6 @@ class LofiAudioEngine {
     return this.currentPlaylist;
   }
 
-  public onMorph(cb: (track: ChillTrack) => void): () => void {
-    this.onMorphCallbacks.push(cb);
-    return () => {
-      this.onMorphCallbacks = this.onMorphCallbacks.filter((c) => c !== cb);
-    };
-  }
-
   public onTrackChange(cb: (track: ChillTrack) => void): () => void {
     this.onTrackChangeCallbacks.push(cb);
     return () => {
@@ -248,7 +255,6 @@ class LofiAudioEngine {
   public setTrack(track: ChillTrack): void {
     this.currentTrack = track;
     this.onTrackChangeCallbacks.forEach((cb) => cb(track));
-    this.onMorphCallbacks.forEach((cb) => cb(track));
 
     if (this.audioElement) {
       const wasPlaying = this.isPlaying;
@@ -284,12 +290,6 @@ class LofiAudioEngine {
 
   // Generates a new customized chill playlist pairing open-source recordings with visual presets
   public generateCustomPlaylist(name: string, vibe: string, baseBpm: number = 72): ChillPlaylist {
-    const titles = [
-      'Velvet Sunset Coffee',
-      'Raindrops on Cedar',
-      'Analog Tape Memories',
-      'Midnight Subway Reflections',
-    ];
     const paletteIds = ['tokyo-night', 'synthwave-84', 'sunset-horizon', 'bioluminescence', 'nord-frost', 'monokai-pro'];
     const patternIds = ['lorenz-attractor', 'hypotrochoid-spirograph', 'perlin-flow-field', 'fourier-epicycles', 'jellyfish-pulse', 'chladni-plate'];
 
@@ -298,7 +298,9 @@ class LofiAudioEngine {
       const baseTrack = OPEN_SOURCE_LOFI_TRACKS[i];
       tracks.push({
         id: `custom-track-${Date.now()}-${i}`,
-        title: `${titles[i % titles.length]} (${baseTrack.title})`,
+        // Honest naming: a custom playlist re-presents the bundled
+        // tracks; it does not create new recordings with new titles.
+        title: baseTrack.title,
         artist: baseTrack.artist,
         bpm: baseBpm + (i % 2 === 0 ? -2 : 3),
         key: baseTrack.key,
@@ -313,34 +315,19 @@ class LofiAudioEngine {
     const playlist: ChillPlaylist = {
       id: `custom-${Date.now()}`,
       name: name || 'Custom Chill Session',
-      description: `Open source lofi chill soundscape (${vibe}) matching visual dynamics in real time`,
+      description: `Your session of the bundled open-source tracks (${vibe}) with suggested pattern and palette pairings`,
       tracks,
     };
 
     return playlist;
   }
 
-  // Periodic visual morph trigger during playback (every 40 seconds)
-  private startMorphTimer(): void {
-    this.stopMorphTimer();
-    if (typeof window === 'undefined') return;
-
-    this.morphIntervalTimer = window.setInterval(() => {
-      if (this.isPlaying) {
-        // Trigger subtle morph to keep visuals dynamically evolving with the track
-        this.onMorphCallbacks.forEach((cb) => cb(this.currentTrack));
-      }
-    }, 40000);
-  }
-
-  private stopMorphTimer(): void {
-    if (this.morphIntervalTimer && typeof window !== 'undefined') {
-      window.clearInterval(this.morphIntervalTimer);
-      this.morphIntervalTimer = null;
-    }
-  }
-
-  // Real-time audio metric analysis computed from the actual audio frequency spectrum
+  // Real-time audio metric analysis. Band edges are defined in Hz
+  // (bass 20-150, mid 150-4000, treble 4000-16000). Beat detection uses
+  // spectral flux against a running average with a cooldown, instead of
+  // a fixed level that stays true for the length of a loud note.
+  // Results are cached per animation frame: the canvas and the player
+  // both read metrics every frame and now share one computation.
   public getMetrics(): AudioMetrics {
     if (!this.analyser || !this.isPlaying) {
       return {
@@ -352,33 +339,53 @@ class LofiAudioEngine {
       };
     }
 
+    const nowMs = performance.now();
+    if (this.metricsCache && nowMs - this.metricsCacheAt < 12) {
+      return this.metricsCache;
+    }
+
     try {
       (this.analyser as unknown as { getByteFrequencyData: (d: Uint8Array) => void }).getByteFrequencyData(this.freqData);
 
-      let bassSum = 0;
-      const bassEnd = Math.max(1, Math.floor(this.freqData.length * 0.12));
-      for (let i = 0; i < bassEnd; i++) {
-        bassSum += this.freqData[i];
-      }
-      const bass = bassSum / (bassEnd * 255);
+      const sampleRate = this.ctx?.sampleRate ?? 48000;
+      const binHz = sampleRate / this.analyser.fftSize;
+      const binFor = (hz: number) =>
+        Math.min(this.freqData.length - 1, Math.max(0, Math.round(hz / binHz)));
+      const bassStart = binFor(20);
+      const bassEnd = Math.max(bassStart + 1, binFor(150));
+      const midEnd = Math.max(bassEnd + 1, binFor(4000));
+      const trebleEnd = Math.max(midEnd + 1, binFor(16000));
 
-      let midSum = 0;
-      const midEnd = Math.max(bassEnd + 1, Math.floor(this.freqData.length * 0.45));
-      for (let i = bassEnd; i < midEnd; i++) {
-        midSum += this.freqData[i];
-      }
-      const mid = midSum / ((midEnd - bassEnd) * 255);
+      const bandAvg = (from: number, to: number) => {
+        let sum = 0;
+        for (let i = from; i < to; i++) sum += this.freqData[i];
+        return sum / ((to - from) * 255);
+      };
 
-      let trebleSum = 0;
-      for (let i = midEnd; i < this.freqData.length; i++) {
-        trebleSum += this.freqData[i];
-      }
-      const treble = trebleSum / ((this.freqData.length - midEnd) * 255);
-
+      const bass = bandAvg(bassStart, bassEnd);
+      const mid = bandAvg(bassEnd, midEnd);
+      const treble = bandAvg(midEnd, trebleEnd);
       const volume = bass * 0.45 + mid * 0.35 + treble * 0.2;
-      const beat = bass > 0.42;
 
-      return {
+      // Spectral flux over the bass+mid range vs its running average.
+      let flux = 0;
+      if (this.prevFreqData && this.prevFreqData.length === this.freqData.length) {
+        for (let i = bassStart; i < midEnd; i++) {
+          const d = this.freqData[i] - this.prevFreqData[i];
+          if (d > 0) flux += d;
+        }
+        flux /= (midEnd - bassStart) * 255;
+      } else {
+        this.prevFreqData = new Uint8Array(this.freqData.length);
+      }
+      this.prevFreqData.set(this.freqData);
+      this.fluxAvg = this.fluxAvg * 0.92 + flux * 0.08;
+      const beat =
+        flux > Math.max(0.015, this.fluxAvg * 1.7) &&
+        nowMs - this.lastBeatAt > 180;
+      if (beat) this.lastBeatAt = nowMs;
+
+      const result: AudioMetrics = {
         bass,
         mid,
         treble,
@@ -386,6 +393,9 @@ class LofiAudioEngine {
         beat,
         frequencyData: this.freqData,
       };
+      this.metricsCache = result;
+      this.metricsCacheAt = nowMs;
+      return result;
     } catch {
       return {
         bass: 0,

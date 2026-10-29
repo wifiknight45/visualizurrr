@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import { X, Keyboard, Command } from 'lucide-react';
+import { X, Keyboard } from 'lucide-react';
 
 interface KeyboardShortcutsModalProps {
   isOpen: boolean;
@@ -20,17 +20,18 @@ export const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({ 
     { key: '↑ / ↓', desc: 'Increase / Decrease animation speed' },
     { key: 'C', desc: 'Cycle predefined color palettes (1 to 26)' },
     { key: 'R', desc: 'Randomize pattern and palette combination' },
-    { key: 'M', desc: 'Cycle render mode (Curves, Particles, Wireframe, Heatmap, Neon)' },
+    { key: 'M', desc: 'Cycle render mode (Curves, Particles, Wireframe, Heatmap, Neon, Matrix)' },
     { key: 'G', desc: 'Toggle Bloom / Neon glow effect' },
     { key: 'T', desc: 'Toggle trail fade persistence' },
     { key: 'P', desc: 'Open Python Code drawer' },
+    { key: 'F', desc: 'Presentation mode (fullscreen, auto-advancing patterns)' },
     { key: 'O', desc: 'Open 68 Pattern Gallery' },
     { key: 'S', desc: 'Export high-resolution PNG snapshot' },
     { key: 'Esc', desc: 'Close any active modal or drawer' },
   ];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200" role="dialog" aria-modal="true" aria-label="Keyboard shortcuts">
       <div className="w-full max-w-lg bg-zinc-950 border border-zinc-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col">
         {/* Header */}
         <div className="p-4 border-b border-zinc-800 flex items-center justify-between">
@@ -40,7 +41,7 @@ export const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({ 
             </div>
             <div>
               <h2 className="text-base font-semibold text-white">Simple Button & Keyboard Commands</h2>
-              <p className="text-xs text-zinc-400">Tactile controls to navigate visualizerrr</p>
+              <p className="text-xs text-zinc-400">Tactile controls to navigate visualizurrr</p>
             </div>
           </div>
           <button
@@ -68,8 +69,12 @@ export const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({ 
         </div>
 
         {/* Footer */}
-        <div className="p-3 border-t border-zinc-800 bg-zinc-900/40 text-center text-xs text-zinc-400 font-mono">
-          All commands also work via the on-screen tactile buttons
+        <div className="p-3 border-t border-zinc-800 bg-zinc-900/40 text-center text-xs text-zinc-400 font-mono space-y-1">
+          <div>All commands also work via the on-screen tactile buttons</div>
+          <div className="text-zinc-500">
+            Photosensitivity: patterns can flash and pulse. If your system
+            requests reduced motion, animation slows and beat flares are disabled.
+          </div>
         </div>
       </div>
     </div>

@@ -99,7 +99,7 @@ export interface PatternDefinition {
   tags: string[];
   parameters: PatternParameter[];
   defaultParameters: Record<string, number>;
-  pythonCode: (params: Record<string, number>, paletteName: string) => string;
+  pythonCode: (params: Record<string, number>, palette: ColorPalette) => string;
   render: (ctx: RenderContext) => void;
   reset?: () => void;
 }

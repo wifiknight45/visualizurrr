@@ -5,30 +5,70 @@
 
 import React, { useState } from 'react';
 import { ColorPalette } from '../types/visualizer';
-import { COLOR_PALETTES } from '../data/palettes';
-import { X, Check, Search, Palette } from 'lucide-react';
+import { X, Check, Search, Palette, Plus, Trash2 } from 'lucide-react';
 
 interface PalettePickerModalProps {
   isOpen: boolean;
   onClose: () => void;
   currentPalette: ColorPalette;
   onSelectPalette: (palette: ColorPalette) => void;
+  palettes: ColorPalette[];
+  onSaveCustomPalette: (palette: ColorPalette) => void;
+  onDeleteCustomPalette: (id: string) => void;
 }
+
+const CUSTOM_CATEGORY = 'Editorial & Minimal';
 
 export const PalettePickerModal: React.FC<PalettePickerModalProps> = ({
   isOpen,
   onClose,
   currentPalette,
   onSelectPalette,
+  palettes,
+  onSaveCustomPalette,
+  onDeleteCustomPalette,
 }) => {
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
+  const [isEditorOpen, setIsEditorOpen] = useState(false);
+  const [draftName, setDraftName] = useState('My Palette');
+  const [draftColors, setDraftColors] = useState({
+    background: '#050508',
+    primary: '#38bdf8',
+    secondary: '#818cf8',
+    accent: '#f472b6',
+    highlight: '#facc15',
+  });
 
   if (!isOpen) return null;
 
   const categories = ['All', 'Python & Scientific', 'Cyber & Neon', 'Nature & Celestial', 'Editorial & Minimal'];
 
-  const filteredPalettes = COLOR_PALETTES.filter((p) => {
+  const handleSaveCustom = () => {
+    const palette: ColorPalette = {
+      id: `custom-${Date.now()}`,
+      name: draftName.trim() || 'My Palette',
+      category: CUSTOM_CATEGORY,
+      background: draftColors.background,
+      primary: draftColors.primary,
+      secondary: draftColors.secondary,
+      accent: draftColors.accent,
+      highlight: draftColors.highlight,
+      colors: [
+        draftColors.primary,
+        draftColors.secondary,
+        draftColors.accent,
+        draftColors.highlight,
+        draftColors.primary,
+      ],
+    };
+    onSaveCustomPalette(palette);
+    setIsEditorOpen(false);
+    onSelectPalette(palette);
+    onClose();
+  };
+
+  const filteredPalettes = palettes.filter((p) => {
     const matchesCategory = selectedCategory === 'All' || p.category === selectedCategory;
     const matchesSearch =
       p.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -37,7 +77,7 @@ export const PalettePickerModal: React.FC<PalettePickerModalProps> = ({
   });
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-in fade-in duration-200" role="dialog" aria-modal="true" aria-label="Choose a color palette">
       <div className="w-full max-w-3xl max-h-[85vh] bg-zinc-950 border border-zinc-800 rounded-2xl shadow-2xl flex flex-col overflow-hidden">
         {/* Modal Header */}
         <div className="p-4 border-b border-zinc-800 flex items-center justify-between">
@@ -48,7 +88,7 @@ export const PalettePickerModal: React.FC<PalettePickerModalProps> = ({
             <div>
               <h2 className="text-base font-semibold text-white">Predefined Color Palettes</h2>
               <p className="text-xs text-zinc-400">
-                Choose from {COLOR_PALETTES.length} curated aesthetic palettes (Scientific, Neon, Celestial, Minimal)
+                Choose from {palettes.length} palettes (Scientific, Neon, Celestial, Minimal) or create your own
               </p>
             </div>
           </div>
@@ -91,6 +131,55 @@ export const PalettePickerModal: React.FC<PalettePickerModalProps> = ({
           </div>
         </div>
 
+        {/* Custom palette editor */}
+        <div className="px-4 pt-3">
+          <button
+            onClick={() => setIsEditorOpen((prev) => !prev)}
+            className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-lg border border-zinc-800 bg-zinc-900/60 text-zinc-300 hover:text-white hover:border-zinc-700 transition-colors"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            {isEditorOpen ? 'Close palette editor' : 'Create custom palette'}
+          </button>
+          {isEditorOpen && (
+            <div className="mt-3 p-3 rounded-xl border border-zinc-800 bg-zinc-900/50 flex flex-col gap-3">
+              <input
+                type="text"
+                value={draftName}
+                onChange={(e) => setDraftName(e.target.value)}
+                placeholder="Palette name"
+                className="w-full px-3 py-1.5 bg-zinc-900 border border-zinc-800 rounded-lg text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-sky-500"
+              />
+              <div className="flex flex-wrap items-end gap-3">
+                {(Object.keys(draftColors) as (keyof typeof draftColors)[]).map((key) => (
+                  <label key={key} className="flex flex-col gap-1 text-[10px] uppercase tracking-wide text-zinc-400">
+                    {key}
+                    <input
+                      type="color"
+                      value={draftColors[key]}
+                      onChange={(e) =>
+                        setDraftColors((prev) => ({ ...prev, [key]: e.target.value }))
+                      }
+                      className="w-10 h-8 rounded cursor-pointer bg-transparent border border-zinc-700"
+                    />
+                  </label>
+                ))}
+                <div
+                  className="flex-1 min-w-24 h-8 rounded-md border border-black/30"
+                  style={{
+                    background: `linear-gradient(to right, ${draftColors.primary}, ${draftColors.secondary}, ${draftColors.accent}, ${draftColors.highlight})`,
+                  }}
+                />
+              </div>
+              <button
+                onClick={handleSaveCustom}
+                className="self-start text-xs px-3 py-1.5 rounded-lg bg-sky-600 hover:bg-sky-500 text-white font-medium transition-colors"
+              >
+                Save palette
+              </button>
+            </div>
+          )}
+        </div>
+
         {/* Palettes Grid */}
         <div className="p-4 overflow-y-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
           {filteredPalettes.map((pal) => {
@@ -119,6 +208,20 @@ export const PalettePickerModal: React.FC<PalettePickerModalProps> = ({
                   {isSelected && (
                     <span className="p-1 rounded-full bg-sky-500 text-white shadow-sm">
                       <Check className="w-3 h-3" />
+                    </span>
+                  )}
+                  {pal.id.startsWith('custom-') && (
+                    <span
+                      role="button"
+                      aria-label={`Delete ${pal.name}`}
+                      title="Delete custom palette"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onDeleteCustomPalette(pal.id);
+                      }}
+                      className="p-1 rounded-full text-zinc-500 hover:text-red-400 hover:bg-zinc-800 transition-colors"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
                     </span>
                   )}
                 </div>

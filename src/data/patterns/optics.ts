@@ -4,6 +4,7 @@
  */
 
 import { PatternDefinition } from '../../types/visualizer';
+import { drawPath, fillCircle } from '../../utils/drawModes';
 
 export const OPTICS_PATTERNS: PatternDefinition[] = [
   {
@@ -20,9 +21,9 @@ export const OPTICS_PATTERNS: PatternDefinition[] = [
       { id: 'rotSpeed', name: 'Angular Beat Velocity', min: 0.1, max: 1.5, step: 0.1, defaultValue: 0.4 },
     ],
     defaultParameters: { lines: 45, rotSpeed: 0.4 },
-    pythonCode: (params, paletteName) => `"""
+    pythonCode: (params, palette) => `"""
 Moiré Pattern Interference
-Palette: ${paletteName}
+Palette: ${palette.name}
 """
 import numpy as np
 import matplotlib.pyplot as plt
@@ -41,7 +42,7 @@ plt.imshow(moire, cmap='gray')
 plt.axis('off')
 plt.show()`,
     render: (ctx) => {
-      const { ctx: c, width, height, time, params, sampleColor } = ctx;
+      const { ctx: c, width, height, time, params, sampleColor, mode } = ctx;
       const count = params.lines ?? 45;
       const rate = (params.rotSpeed ?? 0.4) * 0.2;
 
@@ -49,16 +50,10 @@ plt.show()`,
       const cy = height / 2;
       const maxDim = Math.max(width, height) * 1.2;
 
-      c.lineWidth = 1.6;
-
       // Base layer
-      c.strokeStyle = sampleColor(0.2);
       for (let i = -count; i <= count; i++) {
         const x = cx + (i * maxDim) / (count * 2);
-        c.beginPath();
-        c.moveTo(x, 0);
-        c.lineTo(x, height);
-        c.stroke();
+        drawPath(c, [{ x, y: 0 }, { x, y: height }], mode, () => sampleColor(0.2), 1.6);
       }
 
       // Overlapping rotating layer
@@ -66,14 +61,9 @@ plt.show()`,
       c.save();
       c.translate(cx, cy);
       c.rotate(rot);
-      c.strokeStyle = sampleColor(0.85);
-
       for (let i = -count; i <= count; i++) {
         const x = (i * maxDim) / (count * 2);
-        c.beginPath();
-        c.moveTo(x, -maxDim / 2);
-        c.lineTo(x, maxDim / 2);
-        c.stroke();
+        drawPath(c, [{ x, y: -maxDim / 2 }, { x, y: maxDim / 2 }], mode, () => sampleColor(0.85), 1.6);
       }
       c.restore();
     },
@@ -91,9 +81,9 @@ plt.show()`,
       { id: 'generations', name: 'Subdivision Depth', min: 2, max: 4, step: 1, defaultValue: 3 },
     ],
     defaultParameters: { generations: 3 },
-    pythonCode: (params, paletteName) => `"""
+    pythonCode: (palette) => `"""
 Penrose P3 Tiling
-Palette: ${paletteName}
+Palette: ${palette.name}
 """
 import numpy as np
 import matplotlib.pyplot as plt
@@ -102,7 +92,7 @@ phi = (1 + np.sqrt(5)) / 2
 print("Subdividing golden triangles into Penrose darts and kites...")
 `,
     render: (ctx) => {
-      const { ctx: c, width, height, time, params, sampleColor } = ctx;
+      const { ctx: c, width, height, time, params, sampleColor, mode } = ctx;
       const gen = Math.min(Math.floor(params.generations ?? 3), 4);
       const cx = width / 2;
       const cy = height / 2;
@@ -159,19 +149,47 @@ print("Subdividing golden triangles into Penrose darts and kites...")
         triangles = next;
       }
 
-      c.lineWidth = 1.0;
       for (let i = 0; i < triangles.length; i++) {
         const t = triangles[i];
-        c.beginPath();
-        c.moveTo(t.a.x, t.a.y);
-        c.lineTo(t.b.x, t.b.y);
-        c.lineTo(t.c.x, t.c.y);
-        c.closePath();
-
-        c.fillStyle = sampleColor(t.type === 0 ? 0.35 : 0.85);
-        c.fill();
-        c.strokeStyle = sampleColor(0.15);
-        c.stroke();
+        const fillColor = sampleColor(t.type === 0 ? 0.35 : 0.85);
+        const centroid = {
+          x: (t.a.x + t.b.x + t.c.x) / 3,
+          y: (t.a.y + t.b.y + t.c.y) / 3,
+        };
+        if (mode === 'particles') {
+          // No fill: vertex dots + outline
+          for (const v of [t.a, t.b, t.c]) {
+            fillCircle(c, v.x, v.y, 2, mode, fillColor);
+          }
+        } else if (mode === 'matrix') {
+          // Inset blocky fill
+          c.beginPath();
+          for (const v of [t.a, t.b, t.c]) {
+            const ix = centroid.x + (v.x - centroid.x) * 0.78;
+            const iy = centroid.y + (v.y - centroid.y) * 0.78;
+            if (v === t.a) c.moveTo(ix, iy);
+            else c.lineTo(ix, iy);
+          }
+          c.closePath();
+          c.fillStyle = fillColor;
+          c.fill();
+        } else {
+          c.beginPath();
+          c.moveTo(t.a.x, t.a.y);
+          c.lineTo(t.b.x, t.b.y);
+          c.lineTo(t.c.x, t.c.y);
+          c.closePath();
+          c.fillStyle = fillColor;
+          if (mode === 'heatmap') c.globalAlpha = 0.55;
+          c.fill();
+          c.globalAlpha = 1;
+        }
+        drawPath(c, [t.a, t.b, t.c, t.a], mode, () => sampleColor(0.15), 1.0);
+        if (mode === 'mesh') {
+          for (const v of [t.a, t.b, t.c]) {
+            drawPath(c, [centroid, v], mode, () => sampleColor(0.15), 0.6);
+          }
+        }
       }
     },
   },
@@ -188,9 +206,9 @@ print("Subdividing golden triangles into Penrose darts and kites...")
       { id: 'seeds', name: 'Seed Points', min: 15, max: 50, step: 5, defaultValue: 28 },
     ],
     defaultParameters: { seeds: 28 },
-    pythonCode: (params, paletteName) => `"""
+    pythonCode: (params, palette) => `"""
 Voronoi Diagram in Python
-Palette: ${paletteName}
+Palette: ${palette.name}
 """
 import numpy as np
 import matplotlib.pyplot as plt
@@ -198,11 +216,11 @@ from scipy.spatial import Voronoi, voronoi_plot_2d
 
 points = np.random.rand(${params.seeds}, 2)
 vor = Voronoi(points)
-fig = voronoi_plot_2d(vor, show_vertices=False, line_colors='#00f0ff', line_width=1.5)
+fig = voronoi_plot_2d(vor, show_vertices=False, line_colors='${palette.primary}', line_width=1.5)
 plt.axis('off')
 plt.show()`,
     render: (ctx) => {
-      const { ctx: c, width, height, time, params, sampleColor } = ctx;
+      const { ctx: c, width, height, time, params, sampleColor, mode } = ctx;
       const count = params.seeds ?? 28;
 
       // Deterministic dynamic seeds
@@ -216,8 +234,6 @@ plt.show()`,
         });
       }
 
-      // Fast render by Voronoi cell circles & borders
-      c.lineWidth = 1.4;
       for (let i = 0; i < seeds.length; i++) {
         for (let j = i + 1; j < seeds.length; j++) {
           const dx = seeds[i].x - seeds[j].x;
@@ -232,19 +248,16 @@ plt.show()`,
             const perpX = -dy / dist;
             const perpY = dx / dist;
 
-            c.beginPath();
-            c.moveTo(midX - perpX * 40, midY - perpY * 40);
-            c.lineTo(midX + perpX * 40, midY + perpY * 40);
-            c.strokeStyle = sampleColor((i / count + time * 0.05) % 1);
-            c.stroke();
+            const color = sampleColor((i / count + time * 0.05) % 1);
+            drawPath(c, [
+              { x: midX - perpX * 40, y: midY - perpY * 40 },
+              { x: midX + perpX * 40, y: midY + perpY * 40 },
+            ], mode, () => color, 1.4);
           }
         }
 
-        // Draw seed nucleus
-        c.fillStyle = sampleColor(0.95);
-        c.beginPath();
-        c.arc(seeds[i].x, seeds[i].y, 3.5, 0, Math.PI * 2);
-        c.fill();
+        // Seed nucleus
+        fillCircle(c, seeds[i].x, seeds[i].y, 3.5, mode, sampleColor(0.95));
       }
     },
   },
@@ -261,9 +274,9 @@ plt.show()`,
       { id: 'nodes', name: 'Network Nodes', min: 20, max: 60, step: 5, defaultValue: 35 },
     ],
     defaultParameters: { nodes: 35 },
-    pythonCode: (params, paletteName) => `"""
+    pythonCode: (params, palette) => `"""
 Delaunay Triangulation
-Palette: ${paletteName}
+Palette: ${palette.name}
 """
 import numpy as np
 import matplotlib.pyplot as plt
@@ -271,11 +284,11 @@ from scipy.spatial import Delaunay
 
 points = np.random.rand(${params.nodes}, 2)
 tri = Delaunay(points)
-plt.triplot(points[:,0], points[:,1], tri.simplices, color='#ff2a85', lw=1.2)
+plt.triplot(points[:,0], points[:,1], tri.simplices, color='${palette.accent}', lw=1.2)
 plt.axis('off')
 plt.show()`,
     render: (ctx) => {
-      const { ctx: c, width, height, time, params, sampleColor } = ctx;
+      const { ctx: c, width, height, time, params, sampleColor, mode } = ctx;
       const count = params.nodes ?? 35;
 
       const nodes: { x: number; y: number }[] = [];
@@ -288,7 +301,6 @@ plt.show()`,
         });
       }
 
-      c.lineWidth = 1.2;
       for (let i = 0; i < nodes.length; i++) {
         for (let j = i + 1; j < nodes.length; j++) {
           const dx = nodes[i].x - nodes[j].x;
@@ -296,18 +308,12 @@ plt.show()`,
           const d = Math.sqrt(dx * dx + dy * dy);
 
           if (d < 160) {
-            c.beginPath();
-            c.moveTo(nodes[i].x, nodes[i].y);
-            c.lineTo(nodes[j].x, nodes[j].y);
-            c.strokeStyle = sampleColor((1 - d / 160) * 0.8 + 0.2);
-            c.stroke();
+            const color = sampleColor((1 - d / 160) * 0.8 + 0.2);
+            drawPath(c, [nodes[i], nodes[j]], mode, () => color, 1.2);
           }
         }
 
-        c.fillStyle = sampleColor(0.95);
-        c.beginPath();
-        c.arc(nodes[i].x, nodes[i].y, 3, 0, Math.PI * 2);
-        c.fill();
+        fillCircle(c, nodes[i].x, nodes[i].y, 3, mode, sampleColor(0.95));
       }
     },
   },
@@ -325,9 +331,9 @@ plt.show()`,
       { id: 'bulge', name: 'Bulge Radius', min: 100, max: 250, step: 10, defaultValue: 170 },
     ],
     defaultParameters: { gridLines: 26, bulge: 170 },
-    pythonCode: (params, paletteName) => `"""
+    pythonCode: (palette) => `"""
 Op-Art Bulge Illusion
-Palette: ${paletteName}
+Palette: ${palette.name}
 """
 import numpy as np
 import matplotlib.pyplot as plt
@@ -335,7 +341,7 @@ import matplotlib.pyplot as plt
 print("Generating Victor Vasarely Op-Art spherical deformation...")
 `,
     render: (ctx) => {
-      const { ctx: c, width, height, time, params, sampleColor } = ctx;
+      const { ctx: c, width, height, time, params, sampleColor, mode } = ctx;
       const lines = params.gridLines ?? 26;
       const R = params.bulge ?? 170;
 
@@ -343,48 +349,36 @@ print("Generating Victor Vasarely Op-Art spherical deformation...")
       const cy = height / 2;
       const maxDim = Math.min(width, height) * 0.75;
 
-      c.lineWidth = 1.3;
-
       // Horizontal warped lines
       for (let i = 0; i <= lines; i++) {
         const yNorm = (i / lines - 0.5) * maxDim;
-        c.beginPath();
-
+        const pts: { x: number; y: number }[] = [];
         for (let x = -maxDim / 2; x <= maxDim / 2; x += 4) {
           const r = Math.sqrt(x * x + yNorm * yNorm);
           let dz = 0;
           if (r < R) {
             dz = Math.sqrt(R * R - r * r) * (0.6 + 0.3 * Math.sin(time * 2));
           }
-          const px = cx + x * (1 + dz / R * 0.3);
-          const py = cy + (yNorm - dz * 0.5);
-
-          if (x === -maxDim / 2) c.moveTo(px, py);
-          else c.lineTo(px, py);
+          pts.push({ x: cx + x * (1 + dz / R * 0.3), y: cy + (yNorm - dz * 0.5) });
         }
-        c.strokeStyle = sampleColor((i / lines + time * 0.05) % 1);
-        c.stroke();
+        const color = sampleColor((i / lines + time * 0.05) % 1);
+        drawPath(c, pts, mode, () => color, 1.3);
       }
 
       // Vertical warped lines
       for (let i = 0; i <= lines; i++) {
         const xNorm = (i / lines - 0.5) * maxDim;
-        c.beginPath();
-
+        const pts: { x: number; y: number }[] = [];
         for (let y = -maxDim / 2; y <= maxDim / 2; y += 4) {
           const r = Math.sqrt(xNorm * xNorm + y * y);
           let dz = 0;
           if (r < R) {
             dz = Math.sqrt(R * R - r * r) * (0.6 + 0.3 * Math.sin(time * 2));
           }
-          const px = cx + (xNorm + dz * 0.5);
-          const py = cy + y * (1 + dz / R * 0.3);
-
-          if (y === -maxDim / 2) c.moveTo(px, py);
-          else c.lineTo(px, py);
+          pts.push({ x: cx + (xNorm + dz * 0.5), y: cy + y * (1 + dz / R * 0.3) });
         }
-        c.strokeStyle = sampleColor((i / lines + time * 0.05) % 1);
-        c.stroke();
+        const color = sampleColor((i / lines + time * 0.05) % 1);
+        drawPath(c, pts, mode, () => color, 1.3);
       }
     },
   },
@@ -402,9 +396,9 @@ print("Generating Victor Vasarely Op-Art spherical deformation...")
       { id: 'twist', name: 'Twist Frequency', min: 2, max: 8, step: 1, defaultValue: 4 },
     ],
     defaultParameters: { rings: 28, twist: 4 },
-    pythonCode: (params, paletteName) => `"""
+    pythonCode: (params, palette) => `"""
 Infinite Tunnel Vortex
-Palette: ${paletteName}
+Palette: ${palette.name}
 """
 import numpy as np
 import matplotlib.pyplot as plt
@@ -413,7 +407,7 @@ rings = ${params.rings}
 print(f"Rendering {rings}-ring perspective tunnel corridor...")
 `,
     render: (ctx) => {
-      const { ctx: c, width, height, time, params, sampleColor } = ctx;
+      const { ctx: c, width, height, time, params, sampleColor, mode } = ctx;
       const rings = params.rings ?? 28;
       const twist = params.twist ?? 4;
 
@@ -421,25 +415,20 @@ print(f"Rendering {rings}-ring perspective tunnel corridor...")
       const cy = height / 2;
       const maxR = Math.max(width, height) * 0.65;
 
-      c.lineWidth = 1.5;
-
       for (let i = 0; i < rings; i++) {
         // Continuous moving depth
         const depth = ((i / rings + time * 0.3) % 1);
         const r = maxR * Math.pow(depth, 2.2);
         const rot = time * 0.5 + depth * twist;
 
-        c.beginPath();
         const segments = 8;
-        for (let s = 0; s <= segments; s++) {
-          const ang = (s * Math.PI * 2) / segments + rot;
-          const px = cx + r * Math.cos(ang);
-          const py = cy + r * Math.sin(ang);
-          if (s === 0) c.moveTo(px, py);
-          else c.lineTo(px, py);
+        const pts: { x: number; y: number }[] = [];
+        for (let s2 = 0; s2 <= segments; s2++) {
+          const ang = (s2 * Math.PI * 2) / segments + rot;
+          pts.push({ x: cx + r * Math.cos(ang), y: cy + r * Math.sin(ang) });
         }
-        c.strokeStyle = sampleColor((depth + time * 0.1) % 1);
-        c.stroke();
+        const color = sampleColor((depth + time * 0.1) % 1);
+        drawPath(c, pts, mode, () => color, 1.5);
       }
     },
   },
@@ -457,9 +446,9 @@ print(f"Rendering {rings}-ring perspective tunnel corridor...")
       { id: 'scale', name: 'Projection Size', min: 100, max: 260, step: 10, defaultValue: 180 },
     ],
     defaultParameters: { rotSpeed: 0.8, scale: 180 },
-    pythonCode: (params, paletteName) => `"""
+    pythonCode: (palette) => `"""
 4D Tesseract Wireframe Projection
-Palette: ${paletteName}
+Palette: ${palette.name}
 """
 import numpy as np
 import matplotlib.pyplot as plt
@@ -471,7 +460,7 @@ vertices = np.array([[x, y, z, w]
 print("Projecting 16 vertices and 32 edges of 4D Tesseract...")
 `,
     render: (ctx) => {
-      const { ctx: c, width, height, time, params, sampleColor } = ctx;
+      const { ctx: c, width, height, time, params, sampleColor, mode } = ctx;
       const speed = (params.rotSpeed ?? 0.8) * 0.7;
       const size = (params.scale ?? 180) * (Math.min(width, height) / 520);
 
@@ -525,7 +514,6 @@ print("Projecting 16 vertices and 32 edges of 4D Tesseract...")
       }
 
       // 32 edges (connect vertices that differ by exactly 1 coordinate)
-      c.lineWidth = 1.4;
       for (let i = 0; i < 16; i++) {
         for (let j = i + 1; j < 16; j++) {
           let diff = 0;
@@ -533,19 +521,13 @@ print("Projecting 16 vertices and 32 edges of 4D Tesseract...")
             if (verts[i][k] !== verts[j][k]) diff++;
           }
           if (diff === 1) {
-            c.beginPath();
-            c.moveTo(proj[i].x, proj[i].y);
-            c.lineTo(proj[j].x, proj[j].y);
-            c.strokeStyle = sampleColor((i / 16 + time * 0.1) % 1);
-            c.stroke();
+            const color = sampleColor((i / 16 + time * 0.1) % 1);
+            drawPath(c, [proj[i], proj[j]], mode, () => color, 1.4);
           }
         }
 
-        // Draw vertex
-        c.fillStyle = sampleColor(0.95);
-        c.beginPath();
-        c.arc(proj[i].x, proj[i].y, 3.5, 0, Math.PI * 2);
-        c.fill();
+        // Vertex
+        fillCircle(c, proj[i].x, proj[i].y, 3.5, mode, sampleColor(0.95));
       }
     },
   },
@@ -563,9 +545,9 @@ print("Projecting 16 vertices and 32 edges of 4D Tesseract...")
       { id: 'radius', name: 'Sphere Radius', min: 100, max: 260, step: 10, defaultValue: 180 },
     ],
     defaultParameters: { rotSpeed: 0.5, radius: 180 },
-    pythonCode: (params, paletteName) => `"""
+    pythonCode: (palette) => `"""
 Geodesic Icosahedral Dome
-Palette: ${paletteName}
+Palette: ${palette.name}
 """
 import numpy as np
 import matplotlib.pyplot as plt
@@ -574,7 +556,7 @@ phi = (1 + np.sqrt(5)) / 2
 print("Projecting 12 golden-ratio vertices of regular icosahedron...")
 `,
     render: (ctx) => {
-      const { ctx: c, width, height, time, params, sampleColor } = ctx;
+      const { ctx: c, width, height, time, params, sampleColor, mode } = ctx;
       const rot = time * (params.rotSpeed ?? 0.5);
       const R = (params.radius ?? 180) * (Math.min(width, height) / 520);
       const cx = width / 2;
@@ -609,7 +591,6 @@ print("Projecting 12 golden-ratio vertices of regular icosahedron...")
         };
       });
 
-      c.lineWidth = 1.3;
       // Connect adjacent vertices (dist ~ 1.05)
       for (let i = 0; i < verts.length; i++) {
         for (let j = i + 1; j < verts.length; j++) {
@@ -619,18 +600,12 @@ print("Projecting 12 golden-ratio vertices of regular icosahedron...")
           const d = Math.sqrt(dx * dx + dy * dy + dz * dz);
 
           if (d < 1.1) {
-            c.beginPath();
-            c.moveTo(proj[i].x, proj[i].y);
-            c.lineTo(proj[j].x, proj[j].y);
-            c.strokeStyle = sampleColor((i / verts.length + time * 0.08) % 1);
-            c.stroke();
+            const color = sampleColor((i / verts.length + time * 0.08) % 1);
+            drawPath(c, [proj[i], proj[j]], mode, () => color, 1.3);
           }
         }
 
-        c.fillStyle = sampleColor(0.95);
-        c.beginPath();
-        c.arc(proj[i].x, proj[i].y, 4, 0, Math.PI * 2);
-        c.fill();
+        fillCircle(c, proj[i].x, proj[i].y, 4, mode, sampleColor(0.95));
       }
     },
   },

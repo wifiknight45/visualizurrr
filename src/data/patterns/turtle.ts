@@ -4,6 +4,7 @@
  */
 
 import { PatternDefinition } from '../../types/visualizer';
+import { drawPath, fillCircle } from '../../utils/drawModes';
 
 export const TURTLE_PATTERNS: PatternDefinition[] = [
   {
@@ -20,9 +21,9 @@ export const TURTLE_PATTERNS: PatternDefinition[] = [
       { id: 'scale', name: 'Geometry Radius', min: 100, max: 280, step: 10, defaultValue: 190 },
     ],
     defaultParameters: { depth: 4, scale: 190 },
-    pythonCode: (params, paletteName) => `"""
+    pythonCode: (params, palette) => `"""
 Koch Snowflake in Python Turtle
-Palette: ${paletteName}
+Palette: ${palette.name}
 """
 import turtle
 
@@ -45,18 +46,18 @@ for _ in range(3):
     t.right(120)
 turtle.done()`,
     render: (ctx) => {
-      const { ctx: c, width, height, time, params, sampleColor } = ctx;
+      const { ctx: c, width, height, time, params, sampleColor, mode } = ctx;
       const depth = Math.min(Math.floor(params.depth ?? 4), 5);
       const radius = (params.scale ?? 190) * (Math.min(width, height) / 520);
       const cx = width / 2;
       const cy = height / 2;
       const rot = time * 0.15;
 
-      c.lineWidth = 1.3;
+      const pts: { x: number; y: number }[] = [];
 
       function kochLine(x1: number, y1: number, x2: number, y2: number, d: number) {
         if (d === 0) {
-          c.lineTo(x2, y2);
+          pts.push({ x: x2, y: y2 });
           return;
         }
         const dx = (x2 - x1) / 3;
@@ -83,13 +84,11 @@ turtle.done()`,
       const p1 = { x: cx + radius * Math.cos(Math.PI / 6 + rot), y: cy + radius * Math.sin(Math.PI / 6 + rot) };
       const p2 = { x: cx + radius * Math.cos((5 * Math.PI) / 6 + rot), y: cy + radius * Math.sin((5 * Math.PI) / 6 + rot) };
 
-      c.beginPath();
-      c.moveTo(p0.x, p0.y);
+      pts.push(p0);
       kochLine(p0.x, p0.y, p1.x, p1.y, depth);
       kochLine(p1.x, p1.y, p2.x, p2.y, depth);
       kochLine(p2.x, p2.y, p0.x, p0.y, depth);
-      c.strokeStyle = sampleColor((time * 0.1) % 1);
-      c.stroke();
+      drawPath(c, pts, mode, () => sampleColor((time * 0.1) % 1), 1.3);
     },
   },
   {
@@ -105,9 +104,9 @@ turtle.done()`,
       { id: 'order', name: 'Hilbert Order', min: 2, max: 6, step: 1, defaultValue: 4 },
     ],
     defaultParameters: { order: 4 },
-    pythonCode: (params, paletteName) => `"""
+    pythonCode: (params, palette) => `"""
 Hilbert Curve in Python
-Palette: ${paletteName}
+Palette: ${palette.name}
 """
 import turtle
 
@@ -131,7 +130,7 @@ t.speed(0)
 hilbert(t, ${params.order}, 90, 10)
 turtle.done()`,
     render: (ctx) => {
-      const { ctx: c, width, height, time, params, sampleColor } = ctx;
+      const { ctx: c, width, height, time, params, sampleColor, mode } = ctx;
       const order = Math.min(Math.floor(params.order ?? 4), 6);
       const N = 1 << order;
 
@@ -163,24 +162,12 @@ turtle.done()`,
       }
 
       const total = N * N;
-      c.lineWidth = 1.6;
-      c.beginPath();
-
+      const pts: { x: number; y: number }[] = [];
       for (let i = 0; i < total; i++) {
         const pt = d2xy(N, i);
-        const px = cx + (pt.x + 0.5) * step;
-        const py = cy + (pt.y + 0.5) * step;
-
-        if (i === 0) c.moveTo(px, py);
-        else c.lineTo(px, py);
-
-        if (i % 60 === 0 || i === total - 1) {
-          c.strokeStyle = sampleColor((i / total + time * 0.1) % 1);
-          c.stroke();
-          c.beginPath();
-          c.moveTo(px, py);
-        }
+        pts.push({ x: cx + (pt.x + 0.5) * step, y: cy + (pt.y + 0.5) * step });
       }
+      drawPath(c, pts, mode, (t) => sampleColor((t + time * 0.1) % 1), 1.6);
     },
   },
   {
@@ -196,9 +183,9 @@ turtle.done()`,
       { id: 'depth', name: 'L-System Depth', min: 2, max: 4, step: 1, defaultValue: 3 },
     ],
     defaultParameters: { depth: 3 },
-    pythonCode: (params, paletteName) => `"""
+    pythonCode: (params, palette) => `"""
 Gosper Flowsnake Curve
-Palette: ${paletteName}
+Palette: ${palette.name}
 """
 import turtle
 
@@ -224,7 +211,7 @@ for c in cmds:
         t.right(60)
 turtle.done()`,
     render: (ctx) => {
-      const { ctx: c, width, height, time, params, sampleColor } = ctx;
+      const { ctx: c, width, height, time, params, sampleColor, mode } = ctx;
       const depth = Math.min(Math.floor(params.depth ?? 3), 4);
 
       let s = 'A';
@@ -244,29 +231,20 @@ turtle.done()`,
       let angle = time * 0.1;
       const step = Math.min(width, height) / (Math.pow(2.65, depth) * 5);
 
-      c.lineWidth = 1.3;
-      c.beginPath();
-      c.moveTo(curX, curY);
-
+      const pts: { x: number; y: number }[] = [{ x: curX, y: curY }];
       for (let i = 0; i < s.length; i++) {
         const ch = s[i];
         if (ch === 'A' || ch === 'B') {
           curX += Math.cos(angle) * step;
           curY += Math.sin(angle) * step;
-          c.lineTo(curX, curY);
+          pts.push({ x: curX, y: curY });
         } else if (ch === '+') {
           angle += Math.PI / 3;
         } else if (ch === '-') {
           angle -= Math.PI / 3;
         }
-
-        if (i % 80 === 0 || i === s.length - 1) {
-          c.strokeStyle = sampleColor((i / s.length + time * 0.08) % 1);
-          c.stroke();
-          c.beginPath();
-          c.moveTo(curX, curY);
-        }
       }
+      drawPath(c, pts, mode, (t) => sampleColor((t + time * 0.08) % 1), 1.3);
     },
   },
   {
@@ -282,9 +260,9 @@ turtle.done()`,
       { id: 'depth', name: 'Peano Depth', min: 1, max: 3, step: 1, defaultValue: 2 },
     ],
     defaultParameters: { depth: 2 },
-    pythonCode: (params, paletteName) => `"""
+    pythonCode: (params, palette) => `"""
 Peano Space-Filling Curve
-Palette: ${paletteName}
+Palette: ${palette.name}
 """
 import turtle
 
@@ -306,7 +284,7 @@ for ch in cmds:
         t.right(90)
 turtle.done()`,
     render: (ctx) => {
-      const { ctx: c, width, height, time, params, sampleColor } = ctx;
+      const { ctx: c, width, height, time, params, sampleColor, mode } = ctx;
       const depth = Math.min(Math.floor(params.depth ?? 2), 3);
 
       let s = 'X';
@@ -325,29 +303,20 @@ turtle.done()`,
       let angle = time * 0.1;
       const step = Math.min(width, height) / (Math.pow(3, depth) * 2.2);
 
-      c.lineWidth = 1.3;
-      c.beginPath();
-      c.moveTo(curX, curY);
-
+      const pts: { x: number; y: number }[] = [{ x: curX, y: curY }];
       for (let i = 0; i < s.length; i++) {
         const ch = s[i];
         if (ch === 'F') {
           curX += Math.cos(angle) * step;
           curY += Math.sin(angle) * step;
-          c.lineTo(curX, curY);
+          pts.push({ x: curX, y: curY });
         } else if (ch === '+') {
           angle += Math.PI / 2;
         } else if (ch === '-') {
           angle -= Math.PI / 2;
         }
-
-        if (i % 60 === 0 || i === s.length - 1) {
-          c.strokeStyle = sampleColor((i / s.length + time * 0.08) % 1);
-          c.stroke();
-          c.beginPath();
-          c.moveTo(curX, curY);
-        }
       }
+      drawPath(c, pts, mode, (t) => sampleColor((t + time * 0.08) % 1), 1.3);
     },
   },
   {
@@ -365,9 +334,9 @@ turtle.done()`,
       { id: 'wind', name: 'Wind Sway', min: 0, max: 0.2, step: 0.02, defaultValue: 0.06 },
     ],
     defaultParameters: { depth: 5, angle: 24, wind: 0.06 },
-    pythonCode: (params, paletteName) => `"""
+    pythonCode: (params, palette) => `"""
 L-System Fractal Tree
-Palette: ${paletteName}
+Palette: ${palette.name}
 """
 import turtle
 
@@ -387,7 +356,7 @@ t.speed(0)
 draw_branch(t, 70, ${params.angle})
 turtle.done()`,
     render: (ctx) => {
-      const { ctx: c, width, height, time, params, sampleColor } = ctx;
+      const { ctx: c, width, height, time, params, sampleColor, mode } = ctx;
       const depth = Math.min(Math.floor(params.depth ?? 5), 7);
       const branchAngle = ((params.angle ?? 24) * Math.PI) / 180;
       const windSway = (params.wind ?? 0.06) * Math.sin(time * 2);
@@ -402,19 +371,12 @@ turtle.done()`,
         const xEnd = x + Math.cos(ang) * len;
         const yEnd = y - Math.sin(ang) * len;
 
-        c.beginPath();
-        c.moveTo(x, y);
-        c.lineTo(xEnd, yEnd);
-        c.lineWidth = Math.max(1, d * 1.2);
-        c.strokeStyle = sampleColor((d / depth + time * 0.05) % 1);
-        c.stroke();
+        const color = sampleColor((d / depth + time * 0.05) % 1);
+        drawPath(c, [{ x, y }, { x: xEnd, y: yEnd }], mode, () => color, Math.max(1, d * 1.2));
 
         // Tip leaf
         if (d === 1) {
-          c.fillStyle = sampleColor(0.9);
-          c.beginPath();
-          c.arc(xEnd, yEnd, 3, 0, Math.PI * 2);
-          c.fill();
+          fillCircle(c, xEnd, yEnd, 3, mode, sampleColor(0.9));
         }
 
         const leftAng = ang + branchAngle + windSway;
@@ -441,9 +403,9 @@ turtle.done()`,
       { id: 'angle', name: 'Turn Angle (°)', min: 110, max: 175, step: 1, defaultValue: 144 },
     ],
     defaultParameters: { steps: 250, angle: 144 },
-    pythonCode: (params, paletteName) => `"""
+    pythonCode: (params, palette) => `"""
 Turtle Starburst Nebula
-Palette: ${paletteName}
+Palette: ${palette.name}
 """
 import turtle
 
@@ -454,7 +416,7 @@ for i in range(${params.steps}):
     t.left(${params.angle})
 turtle.done()`,
     render: (ctx) => {
-      const { ctx: c, width, height, time, params, sampleColor } = ctx;
+      const { ctx: c, width, height, time, params, sampleColor, mode } = ctx;
       const count = params.steps ?? 250;
       const deg = params.angle ?? 144;
       const turn = (deg * Math.PI) / 180;
@@ -463,27 +425,17 @@ turtle.done()`,
       let y = height / 2;
       let dir = time * 0.2;
 
-      c.lineWidth = 1.2;
-      c.beginPath();
-      c.moveTo(x, y);
-
       const stepMul = (Math.min(width, height) / 800) * 0.9;
 
+      const pts: { x: number; y: number }[] = [{ x, y }];
       for (let i = 0; i < count; i++) {
         const step = i * stepMul;
         x += Math.cos(dir) * step;
         y += Math.sin(dir) * step;
         dir += turn;
-
-        c.lineTo(x, y);
-
-        if (i % 25 === 0 || i === count - 1) {
-          c.strokeStyle = sampleColor((i / count + time * 0.1) % 1);
-          c.stroke();
-          c.beginPath();
-          c.moveTo(x, y);
-        }
+        pts.push({ x, y });
       }
+      drawPath(c, pts, mode, (t) => sampleColor((t + time * 0.1) % 1), 1.2);
     },
   },
   {
@@ -500,9 +452,9 @@ turtle.done()`,
       { id: 'rings', name: 'Nested Layers', min: 10, max: 40, step: 2, defaultValue: 24 },
     ],
     defaultParameters: { sides: 6, rings: 24 },
-    pythonCode: (params, paletteName) => `"""
+    pythonCode: (params, palette) => `"""
 Polygonal Web in Python
-Palette: ${paletteName}
+Palette: ${palette.name}
 """
 import numpy as np
 import matplotlib.pyplot as plt
@@ -512,7 +464,7 @@ rings = ${params.rings}
 print("Drawing rotating polygonal web...")
 `,
     render: (ctx) => {
-      const { ctx: c, width, height, time, params, sampleColor } = ctx;
+      const { ctx: c, width, height, time, params, sampleColor, mode } = ctx;
       const sides = Math.floor(params.sides ?? 6);
       const rings = Math.floor(params.rings ?? 24);
 
@@ -520,22 +472,16 @@ print("Drawing rotating polygonal web...")
       const cy = height / 2;
       const maxR = Math.min(width, height) * 0.42;
 
-      c.lineWidth = 1.4;
-
       for (let r = 1; r <= rings; r++) {
         const radius = (r / rings) * maxR;
         const rot = time * 0.3 + (r / rings) * Math.PI;
-
-        c.beginPath();
+        const color = sampleColor((r / rings + time * 0.08) % 1);
+        const pts: { x: number; y: number }[] = [];
         for (let i = 0; i <= sides; i++) {
           const ang = (i * Math.PI * 2) / sides + rot;
-          const px = cx + radius * Math.cos(ang);
-          const py = cy + radius * Math.sin(ang);
-          if (i === 0) c.moveTo(px, py);
-          else c.lineTo(px, py);
+          pts.push({ x: cx + radius * Math.cos(ang), y: cy + radius * Math.sin(ang) });
         }
-        c.strokeStyle = sampleColor((r / rings + time * 0.08) % 1);
-        c.stroke();
+        drawPath(c, pts, mode, () => color, 1.4);
       }
     },
   },
@@ -553,9 +499,9 @@ print("Drawing rotating polygonal web...")
       { id: 'angle', name: 'Tear Angle (°)', min: 70, max: 88, step: 1, defaultValue: 82 },
     ],
     defaultParameters: { depth: 3, angle: 82 },
-    pythonCode: (params, paletteName) => `"""
+    pythonCode: (params, palette) => `"""
 Cesàro Fractal Curve
-Palette: ${paletteName}
+Palette: ${palette.name}
 """
 import turtle
 
@@ -578,7 +524,7 @@ for _ in range(4):
     t.right(90)
 turtle.done()`,
     render: (ctx) => {
-      const { ctx: c, width, height, time, params, sampleColor } = ctx;
+      const { ctx: c, width, height, time, params, sampleColor, mode } = ctx;
       const depth = Math.min(Math.floor(params.depth ?? 3), 4);
       const tearDeg = params.angle ?? 82;
       const tearRad = (tearDeg * Math.PI) / 180;
@@ -588,11 +534,11 @@ turtle.done()`,
       const cy = height / 2;
       const rot = time * 0.1;
 
-      c.lineWidth = 1.3;
+      const pts: { x: number; y: number }[] = [];
 
       function cesaroLine(x1: number, y1: number, x2: number, y2: number, d: number) {
         if (d === 0) {
-          c.lineTo(x2, y2);
+          pts.push({ x: x2, y: y2 });
           return;
         }
         const dx = (x2 - x1) / 2;
@@ -610,7 +556,7 @@ turtle.done()`,
         cesaroLine(tipX, tipY, x2, y2, d - 1);
       }
 
-      // Draw 4 sides of torn square
+      // Draw 4 sides of torn square (rotation applied via canvas transform)
       const corners = [
         { x: cx - size / 2, y: cy - size / 2 },
         { x: cx + size / 2, y: cy - size / 2 },
@@ -618,19 +564,17 @@ turtle.done()`,
         { x: cx - size / 2, y: cy + size / 2 },
       ];
 
-      c.save();
-      c.translate(cx, cy);
-      c.rotate(rot);
-      c.translate(-cx, -cy);
-
-      c.beginPath();
-      c.moveTo(corners[0].x, corners[0].y);
+      pts.push(corners[0]);
       for (let i = 0; i < 4; i++) {
         const next = (i + 1) % 4;
         cesaroLine(corners[i].x, corners[i].y, corners[next].x, corners[next].y, depth);
       }
-      c.strokeStyle = sampleColor((time * 0.1) % 1);
-      c.stroke();
+
+      c.save();
+      c.translate(cx, cy);
+      c.rotate(rot);
+      c.translate(-cx, -cy);
+      drawPath(c, pts, mode, () => sampleColor((time * 0.1) % 1), 1.3);
       c.restore();
     },
   },

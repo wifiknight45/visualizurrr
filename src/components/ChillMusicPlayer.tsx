@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { audioEngine, DEFAULT_CHILL_PLAYLISTS } from '../utils/audioEngine';
 import { ChillTrack, ChillPlaylist } from '../types/visualizer';
 import {
@@ -17,7 +17,6 @@ import {
   Disc,
   Radio,
   Sparkles,
-  SlidersHorizontal,
   X,
   Plus,
 } from 'lucide-react';
@@ -36,7 +35,7 @@ export const ChillMusicPlayer: React.FC<ChillMusicPlayerProps> = ({
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [currentTrack, setCurrentTrack] = useState<ChillTrack>(audioEngine.getCurrentTrack());
   const [currentPlaylist, setCurrentPlaylist] = useState<ChillPlaylist>(audioEngine.getCurrentPlaylist());
-  const [volume, setVolume] = useState<number>(0.7);
+  const volume = 0.7;
   const [isMuted, setIsMuted] = useState<boolean>(false);
   const [isPlaylistModalOpen, setIsPlaylistModalOpen] = useState<boolean>(false);
   const [playlists, setPlaylists] = useState<ChillPlaylist[]>(DEFAULT_CHILL_PLAYLISTS);
@@ -49,20 +48,35 @@ export const ChillMusicPlayer: React.FC<ChillMusicPlayerProps> = ({
   // Spectrum meter animation
   const [spectrum, setSpectrum] = useState<number[]>([10, 20, 15, 30, 25, 18, 12, 5]);
 
+  // Keep latest values in refs so the engine subscription registers once.
+  const morphEnabledRef = useRef(isMorphEnabled);
+  morphEnabledRef.current = isMorphEnabled;
+  const onMorphRef = useRef(onMorphTriggered);
+  onMorphRef.current = onMorphTriggered;
+
+  // One subscription for the component's lifetime, cleaned up on unmount.
+  // Morphing happens on track change only, and the engine fires this
+  // exactly once per change, so morphs can neither leak nor double up.
   useEffect(() => {
-    // Listen to morph events from the audio engine
-    audioEngine.onMorph((track) => {
+    return audioEngine.onTrackChange((track) => {
       setCurrentTrack(track);
-      if (isMorphEnabled && onMorphTriggered) {
-        onMorphTriggered(track.patternId, track.paletteId);
+      if (morphEnabledRef.current) {
+        onMorphRef.current?.(track.patternId, track.paletteId);
       }
     });
-  }, [isMorphEnabled, onMorphTriggered]);
+  }, []);
 
-  // Spectrum animation loop
+  // Spectrum animation loop. Throttled to ~20 updates/sec and only
+  // calls setState when the bars actually changed, so a paused player
+  // no longer re-renders 60 times a second forever.
   useEffect(() => {
     let animId: number;
-    const updateSpectrum = () => {
+    let last = 0;
+    let lastKey = '';
+    const updateSpectrum = (now: number) => {
+      animId = requestAnimationFrame(updateSpectrum);
+      if (now - last < 50) return;
+      last = now;
       if (audioEngine.getIsPlaying()) {
         const metrics = audioEngine.getMetrics();
         if (metrics.frequencyData && metrics.frequencyData.length > 0) {
@@ -71,46 +85,33 @@ export const ChillMusicPlayer: React.FC<ChillMusicPlayerProps> = ({
           for (let i = 0; i < 8; i++) {
             bars.push(Math.max(4, Math.round((metrics.frequencyData[i * step] / 255) * 32)));
           }
-          setSpectrum(bars);
+          const key = bars.join(',');
+          if (key !== lastKey) {
+            lastKey = key;
+            setSpectrum(bars);
+          }
         }
-      } else {
+      } else if (lastKey !== 'flat') {
+        lastKey = 'flat';
         setSpectrum([4, 4, 4, 4, 4, 4, 4, 4]);
       }
-      animId = requestAnimationFrame(updateSpectrum);
     };
     animId = requestAnimationFrame(updateSpectrum);
     return () => cancelAnimationFrame(animId);
   }, []);
 
-  const handleTogglePlay = () => {
-    audioEngine.toggle();
-    const active = audioEngine.getIsPlaying();
+  const handleTogglePlay = async () => {
+    const active = await audioEngine.toggle();
     setIsPlaying(active);
     setCurrentTrack(audioEngine.getCurrentTrack());
   };
 
   const handleNext = () => {
     audioEngine.nextTrack();
-    const t = audioEngine.getCurrentTrack();
-    setCurrentTrack(t);
-    if (isMorphEnabled && onMorphTriggered) {
-      onMorphTriggered(t.patternId, t.paletteId);
-    }
   };
 
   const handlePrev = () => {
     audioEngine.prevTrack();
-    const t = audioEngine.getCurrentTrack();
-    setCurrentTrack(t);
-    if (isMorphEnabled && onMorphTriggered) {
-      onMorphTriggered(t.patternId, t.paletteId);
-    }
-  };
-
-  const handleVolumeChange = (v: number) => {
-    setVolume(v);
-    setIsMuted(v === 0);
-    audioEngine.setVolume(v);
   };
 
   const handleToggleMute = () => {
@@ -128,11 +129,9 @@ export const ChillMusicPlayer: React.FC<ChillMusicPlayerProps> = ({
     setCurrentPlaylist(pl);
     setCurrentTrack(pl.tracks[0]);
     if (!isPlaying) {
-      audioEngine.play();
-      setIsPlaying(true);
-    }
-    if (isMorphEnabled && onMorphTriggered) {
-      onMorphTriggered(pl.tracks[0].patternId, pl.tracks[0].paletteId);
+      void audioEngine
+        .play()
+        .then(() => setIsPlaying(audioEngine.getIsPlaying()));
     }
     setIsPlaylistModalOpen(false);
   };
@@ -261,7 +260,7 @@ export const ChillMusicPlayer: React.FC<ChillMusicPlayerProps> = ({
 
       {/* Playlist Generator & Selector Modal */}
       {isPlaylistModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200" role="dialog" aria-modal="true" aria-label="Playlists">
           <div className="w-full max-w-2xl max-h-[85vh] bg-zinc-950 border border-zinc-800 rounded-2xl shadow-2xl flex flex-col overflow-hidden">
             {/* Header */}
             <div className="p-4 border-b border-zinc-800 flex items-center justify-between">
@@ -292,9 +291,9 @@ export const ChillMusicPlayer: React.FC<ChillMusicPlayerProps> = ({
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1.5 text-xs font-semibold text-white">
                     <Plus className="w-4 h-4 text-emerald-400" />
-                    <span>Generate New Chill Playlist</span>
+                    <span>Create Custom Playlist</span>
                   </div>
-                  <span className="text-[10px] font-mono text-zinc-500">Procedural Web Audio Engine</span>
+                  <span className="text-[10px] font-mono text-zinc-500">Bundled open-source tracks</span>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs">
@@ -342,7 +341,7 @@ export const ChillMusicPlayer: React.FC<ChillMusicPlayerProps> = ({
                   className="w-full py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-medium text-xs rounded-xl shadow-md shadow-emerald-600/20 transition-all flex items-center justify-center gap-1.5"
                 >
                   <Sparkles className="w-3.5 h-3.5" />
-                  <span>Generate Chill Soundscape & Morph Visuals</span>
+                  <span>Create Playlist & Morph Visuals</span>
                 </button>
               </div>
 
@@ -398,11 +397,11 @@ export const ChillMusicPlayer: React.FC<ChillMusicPlayerProps> = ({
                                 setCurrentPlaylist(pl);
                                 setCurrentTrack(t);
                                 if (!isPlaying) {
-                                  audioEngine.play();
-                                  setIsPlaying(true);
-                                }
-                                if (isMorphEnabled && onMorphTriggered) {
-                                  onMorphTriggered(t.patternId, t.paletteId);
+                                  void audioEngine
+                                    .play()
+                                    .then(() =>
+                                      setIsPlaying(audioEngine.getIsPlaying())
+                                    );
                                 }
                               }}
                               className={`p-2 rounded-lg text-xs flex items-center justify-between cursor-pointer transition-colors ${

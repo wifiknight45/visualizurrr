@@ -3,7 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { PatternDefinition } from '../../types/visualizer';
+import { PatternDefinition, RenderContext } from '../../types/visualizer';
+import { fillCell } from '../../utils/drawModes';
 
 export const CELLULAR_PATTERNS: PatternDefinition[] = [
   {
@@ -20,9 +21,9 @@ export const CELLULAR_PATTERNS: PatternDefinition[] = [
       { id: 'cellSize', name: 'Cell Pixel Size', min: 4, max: 16, step: 2, defaultValue: 8 },
     ],
     defaultParameters: { density: 0.25, cellSize: 8 },
-    pythonCode: (params, paletteName) => `"""
+    pythonCode: (params, palette) => `"""
 Conway's Game of Life in Python
-Palette: ${paletteName}
+Palette: ${palette.name}
 """
 import numpy as np
 import matplotlib.pyplot as plt
@@ -49,25 +50,26 @@ def update(frameNum, img, grid, N):
     grid[:] = newGrid[:]
     return img,
 
-fig, ax = plt.subplots(facecolor='#090a15')
+fig, ax = plt.subplots(facecolor='${palette.background}')
 img = ax.imshow(grid, cmap='viridis', interpolation='nearest')
 plt.axis('off')
 plt.show()`,
-    render: (() => {
+    ...(() => {
       let grid: Uint8Array | null = null;
       let ageGrid: Uint8Array | null = null;
       let gW = 0, gH = 0;
       let lastStepTime = 0;
+      let seededDensity = -1;
 
-      return (ctx) => {
-        const { ctx: c, width, height, time, params, sampleColor, mouse } = ctx;
+      const render = (ctx: RenderContext) => {
+        const { ctx: c, width, height, time, params, sampleColor, mouse, mode } = ctx;
         const cellSize = Math.floor(params.cellSize ?? 8);
         const density = params.density ?? 0.25;
 
         const cols = Math.floor(width / cellSize);
         const rows = Math.floor(height / cellSize);
 
-        if (!grid || gW !== cols || gH !== rows) {
+        if (!grid || gW !== cols || gH !== rows || density !== seededDensity) {
           gW = cols;
           gH = rows;
           grid = new Uint8Array(gW * gH);
@@ -78,6 +80,7 @@ plt.show()`,
               ageGrid[i] = 1;
             }
           }
+          seededDensity = density;
         }
 
         // Mouse inject
@@ -93,9 +96,15 @@ plt.show()`,
           }
         }
 
-        // Step simulation every 60ms
-        if (time - lastStepTime > 0.06) {
-          lastStepTime = time;
+        // Step the simulation in 60ms increments of pattern time.
+        // Looping (instead of a single if) lets high speed multipliers
+        // advance several generations per frame instead of saturating
+        // at one step per frame; capped against a spiral of death.
+        const stepsDue = Math.min(8, Math.floor((time - lastStepTime) / 0.06));
+        if (stepsDue > 0) {
+          lastStepTime += stepsDue * 0.06;
+          if (time - lastStepTime > 0.48) lastStepTime = time;
+          for (let stepIdx = 0; stepIdx < stepsDue; stepIdx++) {
           const next = new Uint8Array(gW * gH);
           for (let y = 0; y < gH; y++) {
             for (let x = 0; x < gW; x++) {
@@ -124,6 +133,7 @@ plt.show()`,
             }
           }
           grid = next;
+          }
         }
 
         // Render cells
@@ -132,12 +142,13 @@ plt.show()`,
             const idx = y * gW + x;
             if (grid[idx]) {
               const age = ageGrid ? ageGrid[idx] : 1;
-              c.fillStyle = sampleColor(Math.min(1, age / 30));
-              c.fillRect(x * cellSize, y * cellSize, cellSize - 1, cellSize - 1);
+              fillCell(c, x * cellSize, y * cellSize, cellSize, mode, sampleColor(Math.min(1, age / 30)));
             }
           }
         }
       };
+      const reset = () => { grid = null; ageGrid = null; gW = 0; gH = 0; lastStepTime = 0; seededDensity = -1; };
+      return { render, reset };
     })(),
   },
   {
@@ -153,9 +164,9 @@ plt.show()`,
       { id: 'scale', name: 'Pixel Resolution', min: 2, max: 8, step: 1, defaultValue: 3 },
     ],
     defaultParameters: { scale: 3 },
-    pythonCode: (params, paletteName) => `"""
+    pythonCode: (palette) => `"""
 Wolfram Rule 30 in Python
-Palette: ${paletteName}
+Palette: ${palette.name}
 """
 import numpy as np
 import matplotlib.pyplot as plt
@@ -171,12 +182,12 @@ for t in range(1, steps):
         triplet = (ca[t-1, i-1] << 2) | (ca[t-1, i] << 1) | ca[t-1, i+1]
         ca[t, i] = (rule >> triplet) & 1
 
-plt.figure(figsize=(10, 6), facecolor='#090a15')
+plt.figure(figsize=(10, 6), facecolor='${palette.background}')
 plt.imshow(ca, cmap='binary', interpolation='nearest')
 plt.axis('off')
 plt.show()`,
     render: (ctx) => {
-      const { ctx: c, width, height, time, params, sampleColor } = ctx;
+      const { ctx: c, width, height, time, params, sampleColor, mode } = ctx;
       const s = Math.max(2, Math.floor(params.scale ?? 3));
       const cols = Math.floor(width / s);
       const rows = Math.floor(height / s);
@@ -189,8 +200,7 @@ plt.show()`,
         const next = new Uint8Array(cols);
         for (let x = 0; x < cols; x++) {
           if (row[x]) {
-            c.fillStyle = sampleColor((y / rows + time * 0.05) % 1);
-            c.fillRect(x * s, y * s, s, s);
+            fillCell(c, x * s, y * s, s, mode, sampleColor((y / rows + time * 0.05) % 1));
           }
           const left = x > 0 ? row[x - 1] : 0;
           const self = row[x];
@@ -215,9 +225,9 @@ plt.show()`,
       { id: 'scale', name: 'Cell Resolution', min: 2, max: 8, step: 1, defaultValue: 3 },
     ],
     defaultParameters: { scale: 3 },
-    pythonCode: (params, paletteName) => `"""
+    pythonCode: (palette) => `"""
 Wolfram Rule 90 (Sierpinski)
-Palette: ${paletteName}
+Palette: ${palette.name}
 """
 import numpy as np
 import matplotlib.pyplot as plt
@@ -230,12 +240,12 @@ ca[0, width // 2] = 1
 for t in range(1, steps):
     ca[t, 1:-1] = np.bitwise_xor(ca[t-1, :-2], ca[t-1, 2:])
 
-plt.figure(figsize=(10, 6), facecolor='#090a15')
+plt.figure(figsize=(10, 6), facecolor='${palette.background}')
 plt.imshow(ca, cmap='magma', interpolation='nearest')
 plt.axis('off')
 plt.show()`,
     render: (ctx) => {
-      const { ctx: c, width, height, time, params, sampleColor } = ctx;
+      const { ctx: c, width, height, time, params, sampleColor, mode } = ctx;
       const s = Math.max(2, Math.floor(params.scale ?? 3));
       const cols = Math.floor(width / s);
       const rows = Math.floor(height / s);
@@ -248,8 +258,7 @@ plt.show()`,
         const next = new Uint8Array(cols);
         for (let x = 0; x < cols; x++) {
           if (row[x]) {
-            c.fillStyle = sampleColor((y / rows + time * 0.08) % 1);
-            c.fillRect(x * s, y * s, s, s);
+            fillCell(c, x * s, y * s, s, mode, sampleColor((y / rows + time * 0.08) % 1));
           }
           const left = x > 0 ? row[x - 1] : 0;
           const self = row[x];
@@ -274,9 +283,9 @@ plt.show()`,
       { id: 'scale', name: 'Cell Resolution', min: 2, max: 6, step: 1, defaultValue: 3 },
     ],
     defaultParameters: { scale: 3 },
-    pythonCode: (params, paletteName) => `"""
+    pythonCode: (palette) => `"""
 Wolfram Rule 110 (Turing Complete)
-Palette: ${paletteName}
+Palette: ${palette.name}
 """
 import numpy as np
 import matplotlib.pyplot as plt
@@ -296,7 +305,7 @@ plt.imshow(ca, cmap='plasma')
 plt.axis('off')
 plt.show()`,
     render: (ctx) => {
-      const { ctx: c, width, height, time, params, sampleColor } = ctx;
+      const { ctx: c, width, height, time, params, sampleColor, mode } = ctx;
       const s = Math.max(2, Math.floor(params.scale ?? 3));
       const cols = Math.floor(width / s);
       const rows = Math.floor(height / s);
@@ -309,8 +318,7 @@ plt.show()`,
         const next = new Uint8Array(cols);
         for (let x = 0; x < cols; x++) {
           if (row[x]) {
-            c.fillStyle = sampleColor((y / rows + time * 0.05) % 1);
-            c.fillRect(x * s, y * s, s, s);
+            fillCell(c, x * s, y * s, s, mode, sampleColor((y / rows + time * 0.05) % 1));
           }
           const left = x > 0 ? row[x - 1] : 0;
           const self = row[x];
@@ -336,9 +344,9 @@ plt.show()`,
       { id: 'gridScale', name: 'Grid Resolution', min: 3, max: 8, step: 1, defaultValue: 4 },
     ],
     defaultParameters: { stepsPerFrame: 200, gridScale: 4 },
-    pythonCode: (params, paletteName) => `"""
+    pythonCode: (palette) => `"""
 Langton's Ant Simulation
-Palette: ${paletteName}
+Palette: ${palette.name}
 """
 import numpy as np
 import matplotlib.pyplot as plt
@@ -361,13 +369,13 @@ for _ in range(11000):
 plt.imshow(grid, cmap='viridis')
 plt.axis('off')
 plt.show()`,
-    render: (() => {
+    ...(() => {
       let grid: Uint8Array | null = null;
       let antX = 0, antY = 0, antDir = 0; // 0=N, 1=E, 2=S, 3=W
       let gW = 0, gH = 0;
 
-      return (ctx) => {
-        const { ctx: c, width, height, time, params, sampleColor } = ctx;
+      const render = (ctx: RenderContext) => {
+        const { ctx: c, width, height, time, params, sampleColor, mode } = ctx;
         const s = Math.max(2, Math.floor(params.gridScale ?? 4));
         const steps = Math.min(params.stepsPerFrame ?? 200, 600);
         const cols = Math.floor(width / s);
@@ -409,16 +417,16 @@ plt.show()`,
           for (let x = 0; x < gW; x++) {
             if (grid[y * gW + x] === 1) {
               const dist = Math.sqrt((x - gW / 2) ** 2 + (y - gH / 2) ** 2);
-              c.fillStyle = sampleColor((dist / (gW * 0.5) + time * 0.05) % 1);
-              c.fillRect(x * s, y * s, s, s);
+              fillCell(c, x * s, y * s, s, mode, sampleColor((dist / (gW * 0.5) + time * 0.05) % 1));
             }
           }
         }
 
         // Draw ant position marker
-        c.fillStyle = sampleColor(0.95);
-        c.fillRect(antX * s, antY * s, s + 2, s + 2);
+        fillCell(c, antX * s - 1, antY * s - 1, s + 2, mode, sampleColor(0.95));
       };
+      const reset = () => { grid = null; antX = 0; antY = 0; antDir = 0; gW = 0; gH = 0; };
+      return { render, reset };
     })(),
   },
   {
@@ -435,9 +443,9 @@ plt.show()`,
       { id: 'lightning', name: 'Lightning Rate (f)', min: 0.0001, max: 0.001, step: 0.0001, defaultValue: 0.0003 },
     ],
     defaultParameters: { treeGrowth: 0.015, lightning: 0.0003 },
-    pythonCode: (params, paletteName) => `"""
+    pythonCode: (params, palette) => `"""
 Forest Fire Percolation Model
-Palette: ${paletteName}
+Palette: ${palette.name}
 """
 import numpy as np
 import matplotlib.pyplot as plt
@@ -465,13 +473,13 @@ for i in range(N):
 plt.imshow(grid, cmap='inferno')
 plt.axis('off')
 plt.show()`,
-    render: (() => {
+    ...(() => {
       let grid: Uint8Array | null = null;
       let gW = 0, gH = 0;
       const s = 4;
 
-      return (ctx) => {
-        const { ctx: c, width, height, params, sampleColor } = ctx;
+      const render = (ctx: RenderContext) => {
+        const { ctx: c, width, height, params, sampleColor, mode } = ctx;
         const p = params.treeGrowth ?? 0.015;
         const f = params.lightning ?? 0.0003;
         const cols = Math.floor(width / s);
@@ -527,15 +535,15 @@ plt.show()`,
           for (let x = 0; x < gW; x++) {
             const state = grid[y * gW + x];
             if (state === 1) {
-              c.fillStyle = sampleColor(0.35); // tree
-              c.fillRect(x * s, y * s, s, s);
+              fillCell(c, x * s, y * s, s, mode, sampleColor(0.35)); // tree
             } else if (state === 2) {
-              c.fillStyle = sampleColor(0.85); // fire
-              c.fillRect(x * s, y * s, s, s);
+              fillCell(c, x * s, y * s, s, mode, sampleColor(0.85)); // fire
             }
           }
         }
       };
+      const reset = () => { grid = null; gW = 0; gH = 0; };
+      return { render, reset };
     })(),
   },
   {
@@ -551,9 +559,9 @@ plt.show()`,
       { id: 'scale', name: 'Grid Resolution', min: 3, max: 8, step: 1, defaultValue: 5 },
     ],
     defaultParameters: { scale: 5 },
-    pythonCode: (params, paletteName) => `"""
+    pythonCode: (palette) => `"""
 Brian's Brain Neural CA
-Palette: ${paletteName}
+Palette: ${palette.name}
 """
 import numpy as np
 import matplotlib.pyplot as plt
@@ -577,12 +585,12 @@ for i in range(N):
 plt.imshow(grid, cmap='cool')
 plt.axis('off')
 plt.show()`,
-    render: (() => {
+    ...(() => {
       let grid: Uint8Array | null = null;
       let gW = 0, gH = 0;
 
-      return (ctx) => {
-        const { ctx: c, width, height, params, sampleColor } = ctx;
+      const render = (ctx: RenderContext) => {
+        const { ctx: c, width, height, params, sampleColor, mode } = ctx;
         const s = Math.max(3, Math.floor(params.scale ?? 5));
         const cols = Math.floor(width / s);
         const rows = Math.floor(height / s);
@@ -626,15 +634,15 @@ plt.show()`,
           for (let x = 0; x < gW; x++) {
             const st = grid[y * gW + x];
             if (st === 1) {
-              c.fillStyle = sampleColor(0.85); // active flash
-              c.fillRect(x * s, y * s, s, s);
+              fillCell(c, x * s, y * s, s, mode, sampleColor(0.85)); // active flash
             } else if (st === 2) {
-              c.fillStyle = sampleColor(0.3); // dying afterglow
-              c.fillRect(x * s, y * s, s, s);
+              fillCell(c, x * s, y * s, s, mode, sampleColor(0.3)); // dying afterglow
             }
           }
         }
       };
+      const reset = () => { grid = null; gW = 0; gH = 0; };
+      return { render, reset };
     })(),
   },
   {
@@ -651,9 +659,9 @@ plt.show()`,
       { id: 'threshold', name: 'Consensus Threshold', min: 1, max: 3, step: 1, defaultValue: 1 },
     ],
     defaultParameters: { states: 10, threshold: 1 },
-    pythonCode: (params, paletteName) => `"""
+    pythonCode: (params, palette) => `"""
 Cyclic Cellular Automaton
-Palette: ${paletteName}
+Palette: ${palette.name}
 """
 import numpy as np
 import matplotlib.pyplot as plt
@@ -675,13 +683,13 @@ def step(grid):
 plt.imshow(grid, cmap='hsv')
 plt.axis('off')
 plt.show()`,
-    render: (() => {
+    ...(() => {
       let grid: Uint8Array | null = null;
       let gW = 0, gH = 0;
       const s = 4;
 
-      return (ctx) => {
-        const { ctx: c, width, height, params, sampleColor } = ctx;
+      const render = (ctx: RenderContext) => {
+        const { ctx: c, width, height, params, sampleColor, mode } = ctx;
         const K = Math.floor(params.states ?? 10);
         const threshold = Math.floor(params.threshold ?? 1);
         const cols = Math.floor(width / s);
@@ -723,11 +731,12 @@ plt.show()`,
         for (let y = 0; y < gH; y++) {
           for (let x = 0; x < gW; x++) {
             const state = grid[y * gW + x];
-            c.fillStyle = sampleColor(state / K);
-            c.fillRect(x * s, y * s, s, s);
+            fillCell(c, x * s, y * s, s, mode, sampleColor(state / K));
           }
         }
       };
+      const reset = () => { grid = null; gW = 0; gH = 0; };
+      return { render, reset };
     })(),
   },
 ];

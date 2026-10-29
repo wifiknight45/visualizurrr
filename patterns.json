@@ -1,0 +1,692 @@
+{
+  "patterns": [
+    {
+      "number": 1,
+      "webId": "lorenz-attractor",
+      "name": "Lorenz Strange Attractor",
+      "category": "fractals",
+      "cliId": "lorenz"
+    },
+    {
+      "number": 2,
+      "webId": "mandelbrot-set",
+      "name": "Mandelbrot Boundary Explorer",
+      "category": "fractals",
+      "cliId": "mandelbrot"
+    },
+    {
+      "number": 3,
+      "webId": "julia-set",
+      "name": "Dynamic Julia Set Morph",
+      "category": "fractals",
+      "cliId": "julia"
+    },
+    {
+      "number": 4,
+      "webId": "barnsley-fern",
+      "name": "Barnsley Fractal Fern",
+      "category": "fractals",
+      "cliId": "barnsley"
+    },
+    {
+      "number": 5,
+      "webId": "sierpinski-carpet",
+      "name": "Sierpinski Recursive Matrix",
+      "category": "fractals",
+      "cliId": "sierpinski"
+    },
+    {
+      "number": 6,
+      "webId": "rossler-attractor",
+      "name": "R\u00f6ssler Spiral Ribbon",
+      "category": "fractals",
+      "cliId": "rossler"
+    },
+    {
+      "number": 7,
+      "webId": "dragon-curve",
+      "name": "Heighway Dragon Fractal",
+      "category": "fractals",
+      "cliId": "dragon"
+    },
+    {
+      "number": 8,
+      "webId": "apollonian-gasket",
+      "name": "Apollonian Kissing Circles",
+      "category": "fractals",
+      "cliId": "apollonian"
+    },
+    {
+      "number": 9,
+      "webId": "hypotrochoid-spirograph",
+      "name": "Hypotrochoid Mechanical Spirograph",
+      "category": "spirographs",
+      "cliId": "spirograph"
+    },
+    {
+      "number": 10,
+      "webId": "epitrochoid-flower",
+      "name": "Epitrochoid Petaled Roulette",
+      "category": "spirographs",
+      "cliId": "epitrochoid"
+    },
+    {
+      "number": 11,
+      "webId": "maurer-rose",
+      "name": "Maurer Rose Harmonic Lattice",
+      "category": "spirographs",
+      "cliId": "maurer"
+    },
+    {
+      "number": 12,
+      "webId": "lissajous-harmonograph",
+      "name": "Lissajous Multi-Harmonograph",
+      "category": "spirographs",
+      "cliId": "lissajous"
+    },
+    {
+      "number": 13,
+      "webId": "phyllotaxis-sunflower",
+      "name": "Phyllotaxis Golden Spiral",
+      "category": "spirographs",
+      "cliId": "phyllotaxis"
+    },
+    {
+      "number": 14,
+      "webId": "metatrons-cube",
+      "name": "Metatron\u2019s Cube Sacred Lattice",
+      "category": "spirographs",
+      "cliId": "metatron"
+    },
+    {
+      "number": 15,
+      "webId": "cardioid-caustic",
+      "name": "Modular Multiplication Cardioid Caustic",
+      "category": "spirographs",
+      "cliId": "cardioid"
+    },
+    {
+      "number": 16,
+      "webId": "archimedean-vortex",
+      "name": "Dual Fermat & Archimedean Vortex",
+      "category": "spirographs",
+      "cliId": "vortex"
+    },
+    {
+      "number": 17,
+      "webId": "game-of-life",
+      "name": "Conway\u2019s Game of Life",
+      "category": "cellular",
+      "cliId": "life"
+    },
+    {
+      "number": 18,
+      "webId": "wolfram-rule-30",
+      "name": "Wolfram Rule 30 Chaos Automaton",
+      "category": "cellular",
+      "cliId": "rule30"
+    },
+    {
+      "number": 19,
+      "webId": "wolfram-rule-90",
+      "name": "Wolfram Rule 90 Sierpinski CA",
+      "category": "cellular",
+      "cliId": "rule90"
+    },
+    {
+      "number": 20,
+      "webId": "wolfram-rule-110",
+      "name": "Wolfram Rule 110 Universal Computer",
+      "category": "cellular",
+      "cliId": "rule110"
+    },
+    {
+      "number": 21,
+      "webId": "langtons-ant",
+      "name": "Langton\u2019s Ant Emergent Highway",
+      "category": "cellular",
+      "cliId": "langton"
+    },
+    {
+      "number": 22,
+      "webId": "forest-fire",
+      "name": "Drossel-Schwabl Forest Fire Percolation",
+      "category": "cellular",
+      "cliId": "forestfire"
+    },
+    {
+      "number": 23,
+      "webId": "brians-brain",
+      "name": "Brian\u2019s Brain Excitable Lattice",
+      "category": "cellular",
+      "cliId": "brian"
+    },
+    {
+      "number": 24,
+      "webId": "cyclic-ca",
+      "name": "Cyclic Cellular Automaton (David Griffeath)",
+      "category": "cellular",
+      "cliId": "cyclic"
+    },
+    {
+      "number": 25,
+      "webId": "chladni-plate",
+      "name": "Chladni Cymatics Acoustic Plate",
+      "category": "physics",
+      "cliId": "chladni"
+    },
+    {
+      "number": 26,
+      "webId": "double-pendulum",
+      "name": "Double Pendulum Chaotic Trajectory",
+      "category": "physics",
+      "cliId": "pendulum"
+    },
+    {
+      "number": 27,
+      "webId": "fourier-epicycles",
+      "name": "Fourier Series Epicycle Synthesizer",
+      "category": "physics",
+      "cliId": "fourier"
+    },
+    {
+      "number": 28,
+      "webId": "wave-interference",
+      "name": "Wave Interference & Phase Ripple",
+      "category": "physics",
+      "cliId": "interference"
+    },
+    {
+      "number": 29,
+      "webId": "quantum-harmonic",
+      "name": "Quantum Harmonic Oscillator Probability Cloud",
+      "category": "physics",
+      "cliId": "quantum"
+    },
+    {
+      "number": 30,
+      "webId": "coupled-soliton",
+      "name": "Coupled Lattice Non-Linear Soliton",
+      "category": "physics",
+      "cliId": "soliton"
+    },
+    {
+      "number": 31,
+      "webId": "magnetic-pendulum",
+      "name": "Magnetic Pendulum Fractal Basins",
+      "category": "physics",
+      "cliId": "magnetic"
+    },
+    {
+      "number": 32,
+      "webId": "n-body-gravity",
+      "name": "Gravitational N-Body Orbital Ballet",
+      "category": "physics",
+      "cliId": "nbody"
+    },
+    {
+      "number": 33,
+      "webId": "perlin-flow-field",
+      "name": "Perlin Noise Curl Vector Field",
+      "category": "flows",
+      "cliId": "perlin"
+    },
+    {
+      "number": 34,
+      "webId": "clifford-attractor",
+      "name": "Clifford Trigonometric Attractor",
+      "category": "flows",
+      "cliId": "clifford"
+    },
+    {
+      "number": 35,
+      "webId": "dejong-attractor",
+      "name": "Peter de Jong Sinusoidal Attractor",
+      "category": "flows",
+      "cliId": "dejong"
+    },
+    {
+      "number": 36,
+      "webId": "svensson-attractor",
+      "name": "Svensson Turbulent Orbit Attractor",
+      "category": "flows",
+      "cliId": "svensson"
+    },
+    {
+      "number": 37,
+      "webId": "aizawa-attractor",
+      "name": "Aizawa Tornadic Spherical Attractor",
+      "category": "flows",
+      "cliId": "aizawa"
+    },
+    {
+      "number": 38,
+      "webId": "thomas-attractor",
+      "name": "Thomas Cyclically Symmetric Attractor",
+      "category": "flows",
+      "cliId": "thomas"
+    },
+    {
+      "number": 39,
+      "webId": "karman-vortex",
+      "name": "K\u00e1rm\u00e1n Vortex Street Fluid Shedding",
+      "category": "flows",
+      "cliId": "karman"
+    },
+    {
+      "number": 40,
+      "webId": "dla-fractal",
+      "name": "Diffusion-Limited Aggregation (DLA)",
+      "category": "flows",
+      "cliId": "dla"
+    },
+    {
+      "number": 41,
+      "webId": "koch-snowflake",
+      "name": "Koch Snowflake Island",
+      "category": "turtle",
+      "cliId": "koch"
+    },
+    {
+      "number": 42,
+      "webId": "hilbert-curve",
+      "name": "Hilbert Space-Filling Curve",
+      "category": "turtle",
+      "cliId": "hilbert"
+    },
+    {
+      "number": 43,
+      "webId": "gosper-flowsnake",
+      "name": "Gosper Hexagonal Flowsnake",
+      "category": "turtle",
+      "cliId": "gosper"
+    },
+    {
+      "number": 44,
+      "webId": "peano-curve",
+      "name": "Peano Grid Space-Filling Curve",
+      "category": "turtle",
+      "cliId": "peano"
+    },
+    {
+      "number": 45,
+      "webId": "lsystem-tree",
+      "name": "Lindenmayer Stochastic Botanic Tree",
+      "category": "turtle",
+      "cliId": "lsystem"
+    },
+    {
+      "number": 46,
+      "webId": "turtle-starburst",
+      "name": "Turtle Starburst Nebula",
+      "category": "turtle",
+      "cliId": "starburst"
+    },
+    {
+      "number": 47,
+      "webId": "turtle-polygonal-web",
+      "name": "Rotating Polygonal Morph Web",
+      "category": "turtle",
+      "cliId": "polyweb"
+    },
+    {
+      "number": 48,
+      "webId": "cesaro-fractal",
+      "name": "Ces\u00e0ro Torn Square Fractal Curve",
+      "category": "turtle",
+      "cliId": "cesaro"
+    },
+    {
+      "number": 49,
+      "webId": "moire-interference",
+      "name": "Moir\u00e9 Angular Interference Grating",
+      "category": "optics",
+      "cliId": "moire"
+    },
+    {
+      "number": 50,
+      "webId": "penrose-tiling",
+      "name": "Penrose P3 Aperiodic Quasi-Crystal",
+      "category": "optics",
+      "cliId": "penrose"
+    },
+    {
+      "number": 51,
+      "webId": "voronoi-cells",
+      "name": "Voronoi Organic Cellular Partition",
+      "category": "optics",
+      "cliId": "voronoi"
+    },
+    {
+      "number": 52,
+      "webId": "delaunay-network",
+      "name": "Delaunay Dual Constrained Mesh",
+      "category": "optics",
+      "cliId": "delaunay"
+    },
+    {
+      "number": 53,
+      "webId": "op-art-sphere",
+      "name": "Op-Art 3D Sphere Bulge Distortion",
+      "category": "optics",
+      "cliId": "opart"
+    },
+    {
+      "number": 54,
+      "webId": "tunnel-vortex",
+      "name": "Anamorphic Infinite Tunnel Vortex",
+      "category": "optics",
+      "cliId": "tunnel"
+    },
+    {
+      "number": 55,
+      "webId": "tesseract-4d",
+      "name": "4D Hypercube Tesseract Wireframe",
+      "category": "optics",
+      "cliId": "tesseract"
+    },
+    {
+      "number": 56,
+      "webId": "geodesic-dome",
+      "name": "Geodesic Icosahedron Spherical Dome",
+      "category": "optics",
+      "cliId": "geodesic"
+    },
+    {
+      "number": 57,
+      "webId": "reaction-diffusion",
+      "name": "Gray-Scott Reaction-Diffusion Turing Patterns",
+      "category": "nature",
+      "cliId": "reaction"
+    },
+    {
+      "number": 58,
+      "webId": "boids-flocking",
+      "name": "Craig Reynolds Boids Murmuration Flocking",
+      "category": "nature",
+      "cliId": "boids"
+    },
+    {
+      "number": 59,
+      "webId": "physarum-slime",
+      "name": "Slime Mold Physarum Polycephalum Network",
+      "category": "nature",
+      "cliId": "physarum"
+    },
+    {
+      "number": 60,
+      "webId": "predator-prey",
+      "name": "Lotka-Volterra Predator-Prey Phase Waves",
+      "category": "nature",
+      "cliId": "predator"
+    },
+    {
+      "number": 61,
+      "webId": "epidemic-sir",
+      "name": "Kermack-McKendrick Spatial Epidemic Wave",
+      "category": "nature",
+      "cliId": "epidemic"
+    },
+    {
+      "number": 62,
+      "webId": "lightning-dbm",
+      "name": "Dielectric Breakdown Model (Lightning Sparks)",
+      "category": "nature",
+      "cliId": "lightning"
+    },
+    {
+      "number": 63,
+      "webId": "jellyfish-pulse",
+      "name": "Bioluminescent Jellyfish Undulating Pulse",
+      "category": "nature",
+      "cliId": "jellyfish"
+    },
+    {
+      "number": 64,
+      "webId": "starfield-warp",
+      "name": "Relativistic Starfield Warp Drive",
+      "category": "nature",
+      "cliId": "starfield"
+    },
+    {
+      "number": 65,
+      "webId": "mandelbulb-slice",
+      "name": "Mandelbulb Power-8 Hypercomplex Slice",
+      "category": "fractals",
+      "cliId": "mandelbulb"
+    },
+    {
+      "number": 66,
+      "webId": "ulam-spiral",
+      "name": "Ulam Prime Number Diagonal Spiral",
+      "category": "cellular",
+      "cliId": "ulam"
+    },
+    {
+      "number": 67,
+      "webId": "collatz-tree",
+      "name": "Collatz Conjecture 3n+1 Hailstone Tree",
+      "category": "turtle",
+      "cliId": "collatz"
+    },
+    {
+      "number": 68,
+      "webId": "fibonacci-sphere",
+      "name": "3D Fibonacci Golden Ratio Spiral Sphere",
+      "category": "spirographs",
+      "cliId": "fibonacci"
+    }
+  ],
+  "webPalettes": [
+    {
+      "id": "python-classic",
+      "name": "Python Classic"
+    },
+    {
+      "id": "cyberpunk-neon",
+      "name": "Cyberpunk Neon"
+    },
+    {
+      "id": "synthwave-84",
+      "name": "Synthwave 84"
+    },
+    {
+      "id": "viridis",
+      "name": "Viridis"
+    },
+    {
+      "id": "plasma",
+      "name": "Plasma"
+    },
+    {
+      "id": "magma",
+      "name": "Magma"
+    },
+    {
+      "id": "inferno",
+      "name": "Inferno"
+    },
+    {
+      "id": "bioluminescence",
+      "name": "Bioluminescence"
+    },
+    {
+      "id": "monokai-pro",
+      "name": "Monokai Pro"
+    },
+    {
+      "id": "nord-frost",
+      "name": "Nord Frost & Aurora"
+    },
+    {
+      "id": "solarized-dark",
+      "name": "Solarized Dark"
+    },
+    {
+      "id": "dracula-vampire",
+      "name": "Dracula Vampire"
+    },
+    {
+      "id": "tokyo-night",
+      "name": "Tokyo Night"
+    },
+    {
+      "id": "sunset-horizon",
+      "name": "Sunset Horizon"
+    },
+    {
+      "id": "emerald-forest",
+      "name": "Emerald Forest"
+    },
+    {
+      "id": "celestial-nebula",
+      "name": "Celestial Nebula"
+    },
+    {
+      "id": "golden-amber",
+      "name": "Golden Amber & Obsidian"
+    },
+    {
+      "id": "cherry-blossom",
+      "name": "Cherry Blossom"
+    },
+    {
+      "id": "electric-ultraviolet",
+      "name": "Electric Ultraviolet"
+    },
+    {
+      "id": "vaporwave-pastel",
+      "name": "Vaporwave Pastel"
+    },
+    {
+      "id": "laser-matrix",
+      "name": "Laser Matrix"
+    },
+    {
+      "id": "deep-coral-reef",
+      "name": "Deep Coral Reef"
+    },
+    {
+      "id": "blueprint-technical",
+      "name": "Blueprint Technical"
+    },
+    {
+      "id": "copper-patina",
+      "name": "Copper & Patina"
+    },
+    {
+      "id": "rainbow-spectrum",
+      "name": "Rainbow Spectrum"
+    },
+    {
+      "id": "monochrome-velvet",
+      "name": "Monochrome Velvet"
+    }
+  ],
+  "cliPalettes": [
+    {
+      "id": "python-classic",
+      "name": "Python Classic"
+    },
+    {
+      "id": "cyberpunk-neon",
+      "name": "Cyberpunk Neon"
+    },
+    {
+      "id": "synthwave-84",
+      "name": "Synthwave 84"
+    },
+    {
+      "id": "viridis",
+      "name": "Viridis"
+    },
+    {
+      "id": "plasma",
+      "name": "Plasma"
+    },
+    {
+      "id": "magma",
+      "name": "Magma"
+    },
+    {
+      "id": "inferno",
+      "name": "Inferno"
+    },
+    {
+      "id": "bioluminescence",
+      "name": "Bioluminescence"
+    },
+    {
+      "id": "monokai-pro",
+      "name": "Monokai Pro"
+    },
+    {
+      "id": "nord-frost",
+      "name": "Nord Frost & Aurora"
+    },
+    {
+      "id": "solarized-dark",
+      "name": "Solarized Dark"
+    },
+    {
+      "id": "dracula-vampire",
+      "name": "Dracula Vampire"
+    },
+    {
+      "id": "tokyo-night",
+      "name": "Tokyo Night"
+    },
+    {
+      "id": "sunset-horizon",
+      "name": "Sunset Horizon"
+    },
+    {
+      "id": "emerald-forest",
+      "name": "Emerald Forest"
+    },
+    {
+      "id": "celestial-nebula",
+      "name": "Celestial Nebula"
+    },
+    {
+      "id": "golden-amber",
+      "name": "Golden Amber & Obsidian"
+    },
+    {
+      "id": "cherry-blossom",
+      "name": "Cherry Blossom"
+    },
+    {
+      "id": "electric-ultraviolet",
+      "name": "Electric Ultraviolet"
+    },
+    {
+      "id": "vaporwave-pastel",
+      "name": "Vaporwave Pastel"
+    },
+    {
+      "id": "laser-matrix",
+      "name": "Laser Matrix"
+    },
+    {
+      "id": "deep-coral-reef",
+      "name": "Deep Coral Reef"
+    },
+    {
+      "id": "blueprint-technical",
+      "name": "Blueprint Technical"
+    },
+    {
+      "id": "copper-patina",
+      "name": "Copper & Patina"
+    },
+    {
+      "id": "rainbow-spectrum",
+      "name": "Rainbow Spectrum"
+    },
+    {
+      "id": "monochrome-velvet",
+      "name": "Monochrome Velvet"
+    }
+  ]
+}

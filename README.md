@@ -19,7 +19,7 @@ visualizurrr is an interactive mathematical art and algorithmic pattern visualiz
 ![visualizurrr main overview](public/screenshots/desktop.png)
 
 
-visualizurrr features genuine open source studio recorded lofi tracks released under Creative Commons Zero public domain dedication. The audio engine connects directly to Web Audio API frequency analysis nodes to drive visual reactivity without synthetic beeps.
+visualizurrr bundles four lofi tracks credited as Creative Commons Zero public domain dedications (see public/audio/CREDITS.md for the track-by-track credits and license status). The audio engine connects directly to Web Audio API frequency analysis nodes to drive visual reactivity without synthetic beeps.
 
 1. High Quality Open Source Soundtracks
 The station bundles four authentic studio recordings:
@@ -32,7 +32,7 @@ Track four: Midnight Study Session by Lofi Records. Deep rain drenched acoustic 
 Click the play button inside the floating music player dock in the upper right corner of the screen. The animated vinyl disc spins while eight frequency spectrum bars dance in direct proportion to real time audio power. Use the skip buttons to move forward or backward between tracks, and use the volume slider or mute button to adjust listening levels.
 
 3. Curated and Custom Chill Playlists
-Clicking the track title or playlist icon opens the playlist generator modal. Users can select from prepackaged sessions such as Midnight Tokyo Lofi, Cosmic Study Session, or Coffee Shop Vinyl Beats. Users can also enter a custom session title, pick a vibe mood such as Late Night Focus or Celestial Slumber, adjust the tempo slider between 58 BPM and 85 BPM, and generate an entirely new visual and sonic journey.
+Clicking the track title or playlist icon opens the playlist modal. Users can select from prepackaged sessions such as Midnight Tokyo Lofi, Cosmic Study Session, or Coffee Shop Vinyl Beats. Users can also create a custom session: enter a session title, pick a vibe mood such as Late Night Focus or Celestial Slumber, and set a target tempo between 58 BPM and 85 BPM. A custom session re-presents the four bundled tracks under your session name with suggested pattern and palette pairings for each track — it does not generate new recordings.
 
 4. Audio Reactive Visual Mechanics
 The Web Audio API analyzer extracts spectral metrics sixty times per second:
@@ -42,17 +42,26 @@ Treble Frequencies: Crisp hi hats and ambient room textures excite sparkling par
 Beat Transients: Percussive strikes trigger luminous bloom flares across the visual canvas.
 
 5. Visual Audio Morphing
-When the Morph button is active, visualizurrr synchronizes audio and visuals automatically. Every track change or periodic musical phrase smoothly morphs the active mathematical pattern and color palette to match the mood and harmonic key of the soundtrack.
+When the Morph button is active, visualizurrr synchronizes audio and visuals automatically. Each track change morphs the active mathematical pattern and color palette to the pairing suggested for that track. Morphing pauses for a minute after you pick a pattern or palette yourself, so it never overrides your choices.
 
 ![visualizurrr chill playlists](public/screenshots/playlists.png)
 
-## how to use via bash 
+## how to use via bash
 
-git clone https://github.com/wifiknight45/visualizerrr.git
-cd visualizerrr
+git clone https://github.com/wifiknight45/visualizurrr.git
+cd visualizurrr
 
+Web app:
 
-All audio files inside public audio are fully tracked and committed in git history.
+npm install
+npm run dev        # development server
+npm test           # unit + render smoke tests
+npm run build      # production build in dist/
+
+Terminal visualizer: see "Running in Bash Terminal" below.
+
+All audio files inside public/audio are tracked and committed in git
+history (~20 MB). Credits and license status: public/audio/CREDITS.md.
 
 ## Core Features
 
@@ -67,7 +76,7 @@ Category six: Turtle Geometry and Lindenmayer Systems including Koch Snowflake, 
 Category seven: Computational Optics and Geometry including Moire Gratings, Penrose P3 Quasicrystals, Voronoi Partitions, Delaunay Networks, Op Art Deformations, Tunnel Vortices, Four Dimensional Tesseracts, and Geodesic Domes.
 Category eight: Organic Complex Systems including Gray Scott Morphogenesis, Boids Murmurations, Physarum Slime Mold Networks, Predator Prey Waves, Epidemic SIR Fronts, Dielectric Lightning, Jellyfish Pulses, Relativistic Starfields, Mandelbulb Slices, Ulam Spirals, Collatz Trees, and Fibonacci Spheres.
 
-![visualizerrr aesthetic patterns explorer](public/screenshots/patterns.png)
+![visualizurrr aesthetic patterns explorer](public/screenshots/patterns.png)
 
 2. Twenty Six Predefined Color Palettes
 The visualizer includes twenty six diverse palettes with names clearly displayed throughout the user interface:
@@ -98,7 +107,7 @@ Copper and Patina
 Rainbow Spectrum
 Monochrome Velvet
 
-![visualizerrr color palettes selector](public/screenshots/palettes.png)
+![visualizurrr color palettes selector](public/screenshots/palettes.png)
 
 3. Real Time Speed Control
 Users can adjust simulation velocity smoothly from very slow speeds like 0.05x up to rapid speeds like 6.0x using the tactile slider control or quick preset buttons.
@@ -106,26 +115,25 @@ Users can adjust simulation velocity smoothly from very slow speeds like 0.05x u
 4. Dual Runtime Architecture
 The application runs as a high performance web application with sixty frames per second rendering and as a standalone Python script in bash terminals with twenty four bit truecolor graphics.
 
-![visualizerrr python code generator](public/screenshots/code.png)
+![visualizurrr python code generator](public/screenshots/code.png)
 
 ## Running in Bash Terminal
 
-The Python script visualizerrr.py runs directly in standard bash environments with Python 3:
+The Python script visualizurrr.py runs directly in standard bash environments with Python 3 (standard library only, nothing to install). Every one of the 68 patterns has its own real evaluator — escape-time fractals, integrated attractors, cellular automata, L-systems and more — rendered with 24-bit truecolor half-block graphics.
 
-python3 visualizerrr.py
+python3 visualizurrr.py                                  # Lorenz attractor, default palette
+python3 visualizurrr.py --pattern julia --palette magma  # by id (or number, or full name)
+python3 visualizurrr.py --pattern 2 --speed 2.5          # pattern number, faster
+python3 visualizurrr.py --duration 0                     # run until Ctrl+C
 
-Available commands:
-To list all sixty eight patterns:
-python3 visualizurrr.py list_patterns
+python3 visualizurrr.py list-patterns                    # all 68 patterns
+python3 visualizurrr.py list-palettes                    # all 26 palettes
+python3 visualizurrr.py export my_lorenz.py --pattern lorenz
+                                                         # standalone single-pattern script
 
-To list all twenty six palettes:
-python3 visualizurrr.py list_palettes
-
-To select pattern number two:
-python3 visualizurrr.py pattern 2
-
-To set custom speed:
-python3 visualizurrr.py speed 2.5
+Unknown patterns, palettes or out-of-range speeds exit with an error
+message and a non-zero status. Rendering requires a terminal; the list
+and export commands work anywhere.
 
 ## Web Application Commands and Shortcuts
 
@@ -143,7 +151,7 @@ C key: Cycle predefined color palette
 
 R key: Randomize pattern and palette
 
-M key: Cycle rendering mode between curves, particles, wireframe, heatmap, and neon
+M key: Cycle rendering mode between curves, particles, mesh, heatmap, neon, and matrix (each mode changes how every pattern is drawn)
 
 G key: Toggle glow effect
 
@@ -155,6 +163,49 @@ O key: Open full pattern explorer
 
 S key: Save high resolution PNG image
 
+F key: Presentation mode (fullscreen, controls hidden, patterns auto-advance every 18 seconds)
+
+The control dock also records WebM video of the canvas. The URL hash always reflects the current pattern, palette, render mode, and speed, so links are shareable; your settings, per-pattern parameter tweaks, and any custom palettes you create in the palette picker persist in localStorage. Rendering quality adapts automatically if the frame rate drops.
+
 ## Architecture and Testing
 
-The codebase enforces decoupled pure logic, comprehensive unit tests, smoke testing across all sixty eight patterns, audio engine validation, and parameter fuzzing. All tests run using the native Node test runner.
+The codebase enforces decoupled pure logic, unit tests, a render smoke test that executes all sixty eight patterns in every render mode, parameter-range validation across the whole pattern library, and audio engine validation. All tests run using the Node test runner via tsx:
+
+npm test
+
+Continuous integration (GitHub Actions) runs a clean install, the strict TypeScript check, the test suite, the production build, and Python byte-compilation checks for the terminal CLI on every push.
+
+## mega_visualiser.py — windowed mega visualiser (companion script)
+
+Alongside the terminal visualizer, this repo also includes mega_visualiser.py, a windowed visualiser built with NumPy and pygame. Where visualizurrr.py renders in the bash terminal, mega_visualiser.py renders in a real window with fractal noise detail, gradient lighting, bloom, and a post effects stack (pixelate, posterize, solarize, RGB shift, scanlines, film grain, neon edges).
+
+It ships twenty nine modes — including fluid, fire, nebula, kaleidoscope, julia, mandelbrot, a live Gray-Scott reaction diffusion simulation with ten styles, and a two thousand two hundred particle flow field — crossed with sixty color palettes and thirty named presets: one thousand seven hundred forty base combinations before blending and live dials. Any two modes can be blended live (mix, add, screen, difference), any mode can be folded into a global kaleidoscope, and the noise texture can be re-seeded on the fly.
+
+Run it from bash:
+
+```bash
+pip install numpy pygame pillow
+python3 mega_visualiser.py
+python3 mega_visualiser.py --preset hellfire
+python3 mega_visualiser.py --mode julia --palette plasma
+python3 mega_visualiser.py --list
+```
+
+Headless exports, no window needed (NumPy and Pillow only):
+
+```bash
+python3 mega_visualiser.py --still out.png --mode nebula
+python3 mega_visualiser.py --gif out.gif --mode fluid --frames 48
+python3 mega_visualiser.py --preview contact_sheet.png
+```
+
+In the window: press ? for the full key map, TAB cycles presets, hold the mouse to bend the field around the cursor, drag in reaction mode to seed new growth, hold in flowfield mode to attract particles, and press Y to start or stop GIF recording.
+
+## License
+
+Apache License 2.0 — see the LICENSE file in this repository.
+
+## Changelog
+
+Changes are recorded in CHANGELOG.md, updated after every verified
+stage of work.

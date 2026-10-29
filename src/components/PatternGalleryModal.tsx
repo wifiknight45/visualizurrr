@@ -4,10 +4,10 @@
  */
 
 import React, { useState } from 'react';
-import { PatternDefinition, CategoryId } from '../types/visualizer';
+import { PatternDefinition } from '../types/visualizer';
 import { ALL_PATTERNS } from '../data/patterns/index';
 import { PATTERN_CATEGORIES } from '../data/categories';
-import { X, Search, Check, Layers } from 'lucide-react';
+import { X, Search, Layers } from 'lucide-react';
 
 interface PatternGalleryModalProps {
   isOpen: boolean;
@@ -39,7 +39,7 @@ export const PatternGalleryModal: React.FC<PatternGalleryModalProps> = ({
   });
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200" role="dialog" aria-modal="true" aria-label="Pattern gallery">
       <div className="w-full max-w-4xl max-h-[88vh] bg-zinc-950 border border-zinc-800 rounded-2xl shadow-2xl flex flex-col overflow-hidden">
         {/* Header */}
         <div className="p-4 border-b border-zinc-800 flex items-center justify-between">

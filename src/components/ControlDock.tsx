@@ -12,9 +12,9 @@ import {
   ChevronRight,
   Shuffle,
   Camera,
-  Flame,
+  Video,
+  Maximize,
   Activity,
-  Layers,
   Sparkles,
   Gauge,
   Sliders,
@@ -35,6 +35,9 @@ interface ControlDockProps {
   trails: boolean;
   onToggleTrails: () => void;
   onSnapshot: () => void;
+  isRecording: boolean;
+  onToggleRecord: () => void;
+  onTogglePresent: () => void;
   onOpenPalettes: () => void;
   onToggleParameters: () => void;
   isParametersOpen: boolean;
@@ -55,7 +58,9 @@ export const ControlDock: React.FC<ControlDockProps> = ({
   trails,
   onToggleTrails,
   onSnapshot,
-  onOpenPalettes,
+  isRecording,
+  onToggleRecord,
+  onTogglePresent,
   onToggleParameters,
   isParametersOpen,
 }) => {
@@ -65,6 +70,7 @@ export const ControlDock: React.FC<ControlDockProps> = ({
     { id: 'mesh', label: 'Wireframe' },
     { id: 'heatmap', label: 'Heatmap' },
     { id: 'neon', label: 'Neon' },
+    { id: 'matrix', label: 'Matrix' },
   ];
 
   const speedPresets = [0.25, 0.5, 1.0, 2.0, 4.0];
@@ -212,6 +218,28 @@ export const ControlDock: React.FC<ControlDockProps> = ({
           >
             <Sliders className="w-3.5 h-3.5" />
             <span className="hidden md:inline">Tweak</span>
+          </button>
+
+          <button
+            onClick={onToggleRecord}
+            className={`p-2 rounded-xl border transition-colors ${
+              isRecording
+                ? 'text-red-400 bg-red-500/15 border-red-500/40 animate-pulse'
+                : 'text-zinc-400 hover:text-red-300 bg-zinc-900/90 hover:bg-zinc-800/80 border-zinc-800'
+            }`}
+            title={isRecording ? 'Stop Recording (downloads .webm)' : 'Record WebM Video'}
+            aria-label={isRecording ? 'Stop Recording' : 'Record WebM Video'}
+          >
+            <Video className="w-4 h-4" />
+          </button>
+
+          <button
+            onClick={onTogglePresent}
+            className="p-2 rounded-xl text-zinc-400 hover:text-sky-300 bg-zinc-900/90 hover:bg-zinc-800/80 border border-zinc-800 transition-colors"
+            title="Presentation Mode (F)"
+            aria-label="Presentation Mode"
+          >
+            <Maximize className="w-4 h-4" />
           </button>
 
           <button

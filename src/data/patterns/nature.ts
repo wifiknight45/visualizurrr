@@ -3,7 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { PatternDefinition } from '../../types/visualizer';
+import { PatternDefinition, RenderContext } from '../../types/visualizer';
+import { drawPath, fillCell, fillCircle, strokeCircle } from '../../utils/drawModes';
 
 export const NATURE_PATTERNS: PatternDefinition[] = [
   {
@@ -20,9 +21,9 @@ export const NATURE_PATTERNS: PatternDefinition[] = [
       { id: 'kill', name: 'Kill Rate (k)', min: 0.05, max: 0.07, step: 0.002, defaultValue: 0.06 },
     ],
     defaultParameters: { feed: 0.037, kill: 0.06 },
-    pythonCode: (params, paletteName) => `"""
+    pythonCode: (params, palette) => `"""
 Gray-Scott Reaction Diffusion
-Palette: ${paletteName}
+Palette: ${palette.name}
 """
 import numpy as np
 import matplotlib.pyplot as plt
@@ -36,9 +37,13 @@ V[45:55, 45:55] = 0.5
 print("Simulating Gray-Scott chemical concentration equations...")
 `,
     render: (ctx) => {
-      const { ctx: c, width, height, time, params, sampleColor } = ctx;
-      const F = params.feed ?? 0.037;
-      const k = params.kill ?? 0.06;
+      const { ctx: c, width, height, time, params, sampleColor, mode } = ctx;
+      // Feed/kill drive the field: feed sets the spatial frequency,
+      // kill sets the contrast of the colour mapping.
+      const feed = params.feed ?? 0.037;
+      const kill = params.kill ?? 0.06;
+      const freq = 0.05 + feed * 2.4;
+      const sharp = 0.6 + kill * 9;
 
       const step = 6;
       const cols = Math.floor(width / step);
@@ -47,11 +52,10 @@ print("Simulating Gray-Scott chemical concentration equations...")
       for (let y = 0; y < rows; y++) {
         for (let x = 0; x < cols; x++) {
           const val =
-            Math.sin(x * 0.15 + Math.cos(y * 0.15 + time * 0.5)) *
-            Math.cos(y * 0.15 + Math.sin(x * 0.15 - time * 0.4));
-          const tColor = ((val + 1) * 0.5 + time * 0.05) % 1;
-          c.fillStyle = sampleColor(tColor);
-          c.fillRect(x * step, y * step, step, step);
+            Math.sin(x * freq + Math.cos(y * freq + time * 0.5)) *
+            Math.cos(y * freq + Math.sin(x * freq - time * 0.4));
+          const tColor = (Math.pow((val + 1) * 0.5, sharp) + time * 0.05) % 1;
+          fillCell(c, x * step, y * step, step, mode, sampleColor(tColor));
         }
       }
     },
@@ -70,9 +74,9 @@ print("Simulating Gray-Scott chemical concentration equations...")
       { id: 'maxSpeed', name: 'Flight Velocity', min: 2, max: 8, step: 0.5, defaultValue: 4.5 },
     ],
     defaultParameters: { boidsCount: 100, maxSpeed: 4.5 },
-    pythonCode: (params, paletteName) => `"""
+    pythonCode: (params, palette) => `"""
 Boids Flocking Murmuration
-Palette: ${paletteName}
+Palette: ${palette.name}
 """
 import numpy as np
 import matplotlib.pyplot as plt
@@ -80,7 +84,7 @@ import matplotlib.pyplot as plt
 num_boids = ${params.boidsCount}
 print(f"Simulating {num_boids} boids with separation, alignment, and cohesion...")
 `,
-    render: (() => {
+    ...(() => {
       interface Boid {
         x: number;
         y: number;
@@ -89,10 +93,11 @@ print(f"Simulating {num_boids} boids with separation, alignment, and cohesion...
       }
       let flock: Boid[] = [];
 
-      return (ctx) => {
-        const { ctx: c, width, height, params, sampleColor, mouse } = ctx;
+      const render = (ctx: RenderContext) => {
+        const { ctx: c, width, height, params, sampleColor, mouse, mode, audio } = ctx;
         const count = params.boidsCount ?? 100;
-        const maxV = params.maxSpeed ?? 4.5;
+        // Bass lifts the flock's top speed while music plays
+        const maxV = (params.maxSpeed ?? 4.5) * (1 + (audio?.bass ?? 0) * 0.35);
 
         if (flock.length !== count) {
           flock = [];
@@ -160,24 +165,42 @@ print(f"Simulating {num_boids} boids with separation, alignment, and cohesion...
           b.x = (b.x + b.vx + width) % width;
           b.y = (b.y + b.vy + height) % height;
 
-          // Draw triangular boid
+          // Draw the boid in a shape that follows the render mode
           const heading = Math.atan2(b.vy, b.vx);
+          const boidColor = sampleColor(i / flock.length);
           c.save();
           c.translate(b.x, b.y);
           c.rotate(heading);
 
-          c.beginPath();
-          c.moveTo(8, 0);
-          c.lineTo(-6, -4);
-          c.lineTo(-3, 0);
-          c.lineTo(-6, 4);
-          c.closePath();
-
-          c.fillStyle = sampleColor(i / flock.length);
-          c.fill();
+          if (mode === 'particles') {
+            c.beginPath();
+            c.arc(0, 0, 3.5, 0, Math.PI * 2);
+            c.fillStyle = boidColor;
+            c.fill();
+          } else if (mode === 'matrix') {
+            c.fillStyle = boidColor;
+            c.fillRect(-4, -4, 8, 8);
+          } else {
+            c.beginPath();
+            c.moveTo(8, 0);
+            c.lineTo(-6, -4);
+            c.lineTo(-3, 0);
+            c.lineTo(-6, 4);
+            c.closePath();
+            if (mode === 'mesh') {
+              c.strokeStyle = boidColor;
+              c.lineWidth = 1.2;
+              c.stroke();
+            } else {
+              c.fillStyle = boidColor;
+              c.fill();
+            }
+          }
           c.restore();
         }
       };
+      const reset = () => { flock = []; };
+      return { render, reset };
     })(),
   },
   {
@@ -193,9 +216,9 @@ print(f"Simulating {num_boids} boids with separation, alignment, and cohesion...
       { id: 'nodes', name: 'Food Sources', min: 8, max: 24, step: 2, defaultValue: 14 },
     ],
     defaultParameters: { nodes: 14 },
-    pythonCode: (params, paletteName) => `"""
+    pythonCode: (palette) => `"""
 Physarum Transport Network
-Palette: ${paletteName}
+Palette: ${palette.name}
 """
 import numpy as np
 import matplotlib.pyplot as plt
@@ -203,7 +226,7 @@ import matplotlib.pyplot as plt
 print("Simulating biological slime mold vein optimization...")
 `,
     render: (ctx) => {
-      const { ctx: c, width, height, time, params, sampleColor } = ctx;
+      const { ctx: c, width, height, time, params, sampleColor, mode } = ctx;
       const count = params.nodes ?? 14;
 
       const nodes: { x: number; y: number }[] = [];
@@ -213,7 +236,6 @@ print("Simulating biological slime mold vein optimization...")
         nodes.push({ x: width / 2 + Math.cos(ang) * dist, y: height / 2 + Math.sin(ang) * dist });
       }
 
-      c.lineWidth = 1.8;
       for (let i = 0; i < nodes.length; i++) {
         for (let j = i + 1; j < nodes.length; j++) {
           const dx = nodes[i].x - nodes[j].x;
@@ -221,21 +243,24 @@ print("Simulating biological slime mold vein optimization...")
           const dist = Math.sqrt(dx * dx + dy * dy);
 
           if (dist < 180) {
-            c.beginPath();
-            c.moveTo(nodes[i].x, nodes[i].y);
-            // Curved organic vein
+            // Curved organic vein, sampled so render modes apply
             const midX = (nodes[i].x + nodes[j].x) / 2 + Math.sin(time * 2 + i) * 15;
             const midY = (nodes[i].y + nodes[j].y) / 2 + Math.cos(time * 2 + j) * 15;
-            c.quadraticCurveTo(midX, midY, nodes[j].x, nodes[j].y);
-            c.strokeStyle = sampleColor((i / count + time * 0.05) % 1);
-            c.stroke();
+            const vein: { x: number; y: number }[] = [];
+            for (let k = 0; k <= 16; k++) {
+              const t = k / 16;
+              const mt = 1 - t;
+              vein.push({
+                x: mt * mt * nodes[i].x + 2 * mt * t * midX + t * t * nodes[j].x,
+                y: mt * mt * nodes[i].y + 2 * mt * t * midY + t * t * nodes[j].y,
+              });
+            }
+            const color = sampleColor((i / count + time * 0.05) % 1);
+            drawPath(c, vein, mode, () => color, 1.8);
           }
         }
 
-        c.fillStyle = sampleColor(0.95);
-        c.beginPath();
-        c.arc(nodes[i].x, nodes[i].y, 5, 0, Math.PI * 2);
-        c.fill();
+        fillCircle(c, nodes[i].x, nodes[i].y, 5, mode, sampleColor(0.95));
       }
     },
   },
@@ -253,9 +278,9 @@ print("Simulating biological slime mold vein optimization...")
       { id: 'gamma', name: 'Predator Death (γ)', min: 0.5, max: 2, step: 0.1, defaultValue: 1.4 },
     ],
     defaultParameters: { alpha: 1.1, gamma: 1.4 },
-    pythonCode: (params, paletteName) => `"""
+    pythonCode: (params, palette) => `"""
 Lotka-Volterra Predator-Prey Model
-Palette: ${paletteName}
+Palette: ${palette.name}
 """
 import numpy as np
 import matplotlib.pyplot as plt
@@ -271,11 +296,11 @@ def model(state, t):
 
 t = np.linspace(0, 50, 2000)
 sol = odeint(model, [10, 5], t)
-plt.plot(sol[:, 0], sol[:, 1], lw=1.2, color='#ffd43b')
+plt.plot(sol[:, 0], sol[:, 1], lw=1.2, color='${palette.highlight}')
 plt.axis('off')
 plt.show()`,
     render: (ctx) => {
-      const { ctx: c, width, height, time, params, sampleColor } = ctx;
+      const { ctx: c, width, height, time, params, sampleColor, mode } = ctx;
       const alpha = params.alpha ?? 1.1;
       const gamma = params.gamma ?? 1.4;
 
@@ -283,25 +308,20 @@ plt.show()`,
       const cy = height / 2;
       const scale = Math.min(width, height) * 0.35;
 
-      c.lineWidth = 1.4;
       const orbits = 8;
 
       for (let o = 1; o <= orbits; o++) {
-        c.beginPath();
-        const pts = 200;
-        for (let i = 0; i <= pts; i++) {
-          const t = (i / pts) * Math.PI * 2;
+        const orbit: { x: number; y: number }[] = [];
+        const divisions = 200;
+        for (let i = 0; i <= divisions; i++) {
+          const t = (i / divisions) * Math.PI * 2;
           const x = Math.cos(t) * (o * 0.12 * alpha);
           const y = Math.sin(t) * (o * 0.12 * gamma);
 
-          const px = cx + x * scale;
-          const py = cy + y * scale;
-
-          if (i === 0) c.moveTo(px, py);
-          else c.lineTo(px, py);
+          orbit.push({ x: cx + x * scale, y: cy + y * scale });
         }
-        c.strokeStyle = sampleColor((o / orbits + time * 0.08) % 1);
-        c.stroke();
+        const color = sampleColor((o / orbits + time * 0.08) % 1);
+        drawPath(c, orbit, mode, () => color, 1.4);
       }
     },
   },
@@ -318,9 +338,9 @@ plt.show()`,
       { id: 'betaRate', name: 'Infection Rate (β)', min: 0.2, max: 0.8, step: 0.05, defaultValue: 0.45 },
     ],
     defaultParameters: { betaRate: 0.45 },
-    pythonCode: (params, paletteName) => `"""
+    pythonCode: (palette) => `"""
 SIR Spatial Epidemic Diffusion
-Palette: ${paletteName}
+Palette: ${palette.name}
 """
 import numpy as np
 import matplotlib.pyplot as plt
@@ -328,19 +348,15 @@ import matplotlib.pyplot as plt
 print("Simulating Kermack-McKendrick SIR wave diffusion...")
 `,
     render: (ctx) => {
-      const { ctx: c, width, height, time, sampleColor } = ctx;
+      const { ctx: c, width, height, time, sampleColor, mode } = ctx;
       const cx = width / 2;
       const cy = height / 2;
       const maxR = Math.min(width, height) * 0.45;
 
-      c.lineWidth = 2.0;
       const waves = 10;
       for (let w = 0; w < waves; w++) {
         const r = ((w / waves + time * 0.25) % 1) * maxR;
-        c.beginPath();
-        c.arc(cx, cy, r, 0, Math.PI * 2);
-        c.strokeStyle = sampleColor(w / waves);
-        c.stroke();
+        strokeCircle(c, cx, cy, r, mode, sampleColor(w / waves), 2.0);
       }
     },
   },
@@ -357,9 +373,9 @@ print("Simulating Kermack-McKendrick SIR wave diffusion...")
       { id: 'branches', name: 'Lightning Tridents', min: 4, max: 12, step: 1, defaultValue: 7 },
     ],
     defaultParameters: { branches: 7 },
-    pythonCode: (params, paletteName) => `"""
+    pythonCode: (palette) => `"""
 Dielectric Breakdown Lightning
-Palette: ${paletteName}
+Palette: ${palette.name}
 """
 import numpy as np
 import matplotlib.pyplot as plt
@@ -367,12 +383,10 @@ import matplotlib.pyplot as plt
 print("Simulating Laplace dielectric breakdown lightning paths...")
 `,
     render: (ctx) => {
-      const { ctx: c, width, height, time, params, sampleColor } = ctx;
+      const { ctx: c, width, height, time, params, sampleColor, mode } = ctx;
       const branches = params.branches ?? 7;
       const topX = width / 2;
       const topY = 20;
-
-      c.lineWidth = 1.8;
 
       for (let b = 0; b < branches; b++) {
         let x = topX;
@@ -380,26 +394,26 @@ print("Simulating Laplace dielectric breakdown lightning paths...")
         const targetX = width * (0.2 + (b / branches) * 0.6);
         const targetY = height * 0.95;
 
-        c.beginPath();
-        c.moveTo(x, y);
-
+        const bolt: { x: number; y: number }[] = [{ x, y }];
+        const forks: { x: number; y: number }[][] = [];
         const steps = 30;
-        for (let s = 0; s < steps; s++) {
-          const t = s / steps;
-          const jitterX = Math.sin(s * 15 + time * 10 + b) * 20;
+        for (let s2 = 0; s2 < steps; s2++) {
+          const t = s2 / steps;
+          const jitterX = Math.sin(s2 * 15 + time * 10 + b) * 20;
           x = topX + (targetX - topX) * t + jitterX;
           y = topY + (targetY - topY) * t;
-          c.lineTo(x, y);
+          bolt.push({ x, y });
 
           // Sub-fork
-          if (s % 8 === 0 && s > 5) {
-            c.moveTo(x, y);
-            c.lineTo(x + jitterX * 1.5, y + 25);
-            c.moveTo(x, y);
+          if (s2 % 8 === 0 && s2 > 5) {
+            forks.push([{ x, y }, { x: x + jitterX * 1.5, y: y + 25 }]);
           }
         }
-        c.strokeStyle = sampleColor((b / branches + time * 0.1) % 1);
-        c.stroke();
+        const color = sampleColor((b / branches + time * 0.1) % 1);
+        drawPath(c, bolt, mode, () => color, 1.8);
+        for (const fork of forks) {
+          drawPath(c, fork, mode, () => color, 1.8);
+        }
       }
     },
   },
@@ -417,9 +431,9 @@ print("Simulating Laplace dielectric breakdown lightning paths...")
       { id: 'pulseRate', name: 'Pulse Rhythm', min: 0.5, max: 2.5, step: 0.2, defaultValue: 1.2 },
     ],
     defaultParameters: { tentacles: 16, pulseRate: 1.2 },
-    pythonCode: (params, paletteName) => `"""
+    pythonCode: (palette) => `"""
 Bioluminescent Jellyfish Pulse
-Palette: ${paletteName}
+Palette: ${palette.name}
 """
 import numpy as np
 import matplotlib.pyplot as plt
@@ -427,9 +441,10 @@ import matplotlib.pyplot as plt
 print("Simulating radial bell contraction and soft-body tentacles...")
 `,
     render: (ctx) => {
-      const { ctx: c, width, height, time, params, sampleColor } = ctx;
+      const { ctx: c, width, height, time, params, sampleColor, mode, audio } = ctx;
       const count = params.tentacles ?? 16;
-      const rate = (params.pulseRate ?? 1.2) * 2;
+      // Bass drives the pulse while music plays
+      const rate = (params.pulseRate ?? 1.2) * 2 * (1 + (audio?.bass ?? 0) * 0.6);
 
       const cx = width / 2;
       const cy = height * 0.35 + Math.sin(time * rate * 0.5) * 20;
@@ -438,38 +453,32 @@ print("Simulating radial bell contraction and soft-body tentacles...")
       const contraction = 1 + 0.2 * Math.sin(time * rate);
 
       // Bell cap
-      c.beginPath();
+      const bell: { x: number; y: number }[] = [];
       for (let a = 0; a <= Math.PI; a += 0.05) {
-        const x = cx + Math.cos(a) * bellR * contraction;
-        const y = cy - Math.sin(a) * bellR * (0.8 / contraction);
-        if (a === 0) c.moveTo(x, y);
-        else c.lineTo(x, y);
+        bell.push({
+          x: cx + Math.cos(a) * bellR * contraction,
+          y: cy - Math.sin(a) * bellR * (0.8 / contraction),
+        });
       }
-      c.strokeStyle = sampleColor(0.85);
-      c.lineWidth = 2.5;
-      c.stroke();
+      drawPath(c, bell, mode, () => sampleColor(0.85), 2.5);
 
       // Tentacles
-      c.lineWidth = 1.2;
       for (let i = 0; i < count; i++) {
         const norm = (i / (count - 1)) - 0.5;
         const startX = cx + norm * (bellR * 1.8 * contraction);
         const startY = cy;
 
-        c.beginPath();
-        c.moveTo(startX, startY);
-
-        let tx = startX;
-        let ty = startY;
+        const tentacle: { x: number; y: number }[] = [{ x: startX, y: startY }];
         const tentLen = height * 0.45;
 
         for (let l = 0; l <= 20; l++) {
-          ty = startY + (l / 20) * tentLen;
-          tx = startX + Math.sin(l * 0.4 - time * rate + i) * 15;
-          c.lineTo(tx, ty);
+          tentacle.push({
+            x: startX + Math.sin(l * 0.4 - time * rate + i) * 15,
+            y: startY + (l / 20) * tentLen,
+          });
         }
-        c.strokeStyle = sampleColor((i / count + time * 0.1) % 1);
-        c.stroke();
+        const color = sampleColor((i / count + time * 0.1) % 1);
+        drawPath(c, tentacle, mode, () => color, 1.2);
       }
     },
   },
@@ -487,9 +496,9 @@ print("Simulating radial bell contraction and soft-body tentacles...")
       { id: 'warpSpeed', name: 'Warp Factor', min: 1, max: 8, step: 0.5, defaultValue: 4.0 },
     ],
     defaultParameters: { stars: 600, warpSpeed: 4.0 },
-    pythonCode: (params, paletteName) => `"""
+    pythonCode: (params, palette) => `"""
 Relativistic Starfield Warp
-Palette: ${paletteName}
+Palette: ${palette.name}
 """
 import numpy as np
 import matplotlib.pyplot as plt
@@ -498,7 +507,7 @@ stars = ${params.stars}
 warp = ${params.warpSpeed}
 print(f"Simulating {stars} stars under relativistic Lorentz aberration...")
 `,
-    render: (() => {
+    ...(() => {
       interface Star {
         x: number;
         y: number;
@@ -506,10 +515,11 @@ print(f"Simulating {stars} stars under relativistic Lorentz aberration...")
       }
       let stars: Star[] = [];
 
-      return (ctx) => {
-        const { ctx: c, width, height, params, sampleColor } = ctx;
+      const render = (ctx: RenderContext) => {
+        const { ctx: c, width, height, params, sampleColor, mode, audio } = ctx;
         const count = params.stars ?? 600;
-        const speed = (params.warpSpeed ?? 4.0) * 4;
+        // Treble surges the warp speed while music plays
+        const speed = (params.warpSpeed ?? 4.0) * 4 * (1 + (audio?.treble ?? 0) * 0.9);
 
         const cx = width / 2;
         const cy = height / 2;
@@ -525,7 +535,6 @@ print(f"Simulating {stars} stars under relativistic Lorentz aberration...")
           }
         }
 
-        c.lineWidth = 1.6;
         for (let i = 0; i < stars.length; i++) {
           const s = stars[i];
           const prevZ = s.z;
@@ -545,13 +554,12 @@ print(f"Simulating {stars} stars under relativistic Lorentz aberration...")
           const prevPx = cx + (s.x / prevZ) * fov;
           const prevPy = cy + (s.y / prevZ) * fov;
 
-          c.beginPath();
-          c.moveTo(prevPx, prevPy);
-          c.lineTo(px, py);
-          c.strokeStyle = sampleColor(1 - s.z / 1000);
-          c.stroke();
+          const color = sampleColor(1 - s.z / 1000);
+          drawPath(c, [{ x: prevPx, y: prevPy }, { x: px, y: py }], mode, () => color, 1.6);
         }
       };
+      const reset = () => { stars = []; };
+      return { render, reset };
     })(),
   },
   {
@@ -567,9 +575,9 @@ print(f"Simulating {stars} stars under relativistic Lorentz aberration...")
       { id: 'power', name: 'Bulb Power (n)', min: 4, max: 12, step: 1, defaultValue: 8 },
     ],
     defaultParameters: { power: 8 },
-    pythonCode: (params, paletteName) => `"""
+    pythonCode: (params, palette) => `"""
 Mandelbulb Power-8 Slice
-Palette: ${paletteName}
+Palette: ${palette.name}
 """
 import numpy as np
 import matplotlib.pyplot as plt
@@ -578,26 +586,20 @@ power = ${params.power}
 print(f"Sampling cross section of Mandelbulb with power={power}...")
 `,
     render: (ctx) => {
-      const { ctx: c, width, height, time, params, sampleColor } = ctx;
+      const { ctx: c, width, height, time, params, sampleColor, mode } = ctx;
       const n = params.power ?? 8;
       const scale = Math.min(width, height) * 0.38;
       const cx = width / 2;
       const cy = height / 2;
 
-      c.lineWidth = 1.4;
       const rays = 120;
-
-      c.beginPath();
+      const outline: { x: number; y: number }[] = [];
       for (let i = 0; i <= rays; i++) {
         const theta = (i / rays) * Math.PI * 2;
         const r = (0.7 + 0.25 * Math.cos(n * theta + time * 2)) * scale;
-        const px = cx + r * Math.cos(theta);
-        const py = cy + r * Math.sin(theta);
-        if (i === 0) c.moveTo(px, py);
-        else c.lineTo(px, py);
+        outline.push({ x: cx + r * Math.cos(theta), y: cy + r * Math.sin(theta) });
       }
-      c.strokeStyle = sampleColor(0.85);
-      c.stroke();
+      drawPath(c, outline, mode, () => sampleColor(0.85), 1.4);
     },
   },
   {
@@ -613,9 +615,9 @@ print(f"Sampling cross section of Mandelbulb with power={power}...")
       { id: 'primesCount', name: 'Integer Count', min: 1000, max: 5000, step: 500, defaultValue: 3000 },
     ],
     defaultParameters: { primesCount: 3000 },
-    pythonCode: (params, paletteName) => `"""
+    pythonCode: (palette) => `"""
 Ulam Prime Spiral
-Palette: ${paletteName}
+Palette: ${palette.name}
 """
 import numpy as np
 import matplotlib.pyplot as plt
@@ -629,7 +631,7 @@ def is_prime(n):
 print("Plotting diagonal clustering of primes on Ulam spiral...")
 `,
     render: (ctx) => {
-      const { ctx: c, width, height, time, params, sampleColor } = ctx;
+      const { ctx: c, width, height, time, params, sampleColor, mode } = ctx;
       const maxN = params.primesCount ?? 3000;
       const cx = width / 2;
       const cy = height / 2;
@@ -651,8 +653,7 @@ print("Plotting diagonal clustering of primes on Ulam spiral...")
           if (isPrime(n)) {
             const px = cx + x * s;
             const py = cy + y * s;
-            c.fillStyle = sampleColor((n / maxN + time * 0.05) % 1);
-            c.fillRect(px, py, 2.5, 2.5);
+            fillCell(c, px, py, 2.5, mode, sampleColor((n / maxN + time * 0.05) % 1));
           }
         }
         if (x === y || (x < 0 && x === -y) || (x > 0 && x === 1 - y)) {
@@ -678,9 +679,9 @@ print("Plotting diagonal clustering of primes on Ulam spiral...")
       { id: 'branchAngle', name: 'Branch Curvature (°)', min: 8, max: 20, step: 1, defaultValue: 13 },
     ],
     defaultParameters: { branchAngle: 13 },
-    pythonCode: (params, paletteName) => `"""
+    pythonCode: (palette) => `"""
 Collatz Hailstone Tree
-Palette: ${paletteName}
+Palette: ${palette.name}
 """
 import turtle
 
@@ -695,14 +696,12 @@ def collatz(n):
 print("Drawing Collatz 3n+1 reverse branching hailstone tree...")
 `,
     render: (ctx) => {
-      const { ctx: c, width, height, time, params, sampleColor } = ctx;
+      const { ctx: c, width, height, time, params, sampleColor, mode } = ctx;
       const angleDeg = params.branchAngle ?? 13;
       const angle = (angleDeg * Math.PI) / 180;
 
       const cx = width * 0.2;
       const cy = height * 0.85;
-
-      c.lineWidth = 1.2;
 
       for (let n = 2; n < 80; n++) {
         let val = n;
@@ -710,9 +709,7 @@ print("Drawing Collatz 3n+1 reverse branching hailstone tree...")
         let y = cy;
         let dir = -Math.PI / 4 + time * 0.05;
 
-        c.beginPath();
-        c.moveTo(x, y);
-
+        const chain: { x: number; y: number }[] = [{ x, y }];
         while (val > 1) {
           if (val % 2 === 0) {
             dir -= angle;
@@ -723,10 +720,10 @@ print("Drawing Collatz 3n+1 reverse branching hailstone tree...")
           }
           x += Math.cos(dir) * 6;
           y += Math.sin(dir) * 6;
-          c.lineTo(x, y);
+          chain.push({ x, y });
         }
-        c.strokeStyle = sampleColor((n / 80 + time * 0.05) % 1);
-        c.stroke();
+        const color = sampleColor((n / 80 + time * 0.05) % 1);
+        drawPath(c, chain, mode, () => color, 1.2);
       }
     },
   },
@@ -744,9 +741,9 @@ print("Drawing Collatz 3n+1 reverse branching hailstone tree...")
       { id: 'rotSpeed', name: 'Rotation Rate', min: 0.1, max: 1.5, step: 0.1, defaultValue: 0.5 },
     ],
     defaultParameters: { points: 600, rotSpeed: 0.5 },
-    pythonCode: (params, paletteName) => `"""
+    pythonCode: (params, palette) => `"""
 3D Fibonacci Golden Sphere
-Palette: ${paletteName}
+Palette: ${palette.name}
 """
 import numpy as np
 import matplotlib.pyplot as plt
@@ -760,13 +757,13 @@ r = np.sqrt(1 - z**2)
 x = r * np.cos(theta)
 y = r * np.sin(theta)
 
-fig = plt.figure(facecolor='#090a15')
-ax = fig.add_subplot(111, projection='3d', facecolor='#090a15')
+fig = plt.figure(facecolor='${palette.background}')
+ax = fig.add_subplot(111, projection='3d', facecolor='${palette.background}')
 ax.scatter(x, y, z, c=z, cmap='plasma', s=10)
 ax.axis('off')
 plt.show()`,
     render: (ctx) => {
-      const { ctx: c, width, height, time, params, sampleColor } = ctx;
+      const { ctx: c, width, height, time, params, sampleColor, mode } = ctx;
       const count = params.points ?? 600;
       const rot = time * (params.rotSpeed ?? 0.5);
 
@@ -796,10 +793,7 @@ plt.show()`,
         const py = cy + y * R * pz;
 
         const size = Math.max(1, 2.5 * pz);
-        c.fillStyle = sampleColor(((z + 1) * 0.5 + time * 0.05) % 1);
-        c.beginPath();
-        c.arc(px, py, size, 0, Math.PI * 2);
-        c.fill();
+        fillCircle(c, px, py, size, mode, sampleColor(((z + 1) * 0.5 + time * 0.05) % 1));
       }
     },
   },

@@ -35,19 +35,19 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
             py
           </div>
           <span className="font-bold tracking-tight text-white text-base font-mono">
-            visualizerrr
+            visualizurrr
           </span>
         </div>
 
         <a
-          href="https://github.com/wifiknight45/visualizerrr"
+          href="https://github.com/wifiknight45/visualizurrr"
           target="_blank"
           rel="noopener noreferrer"
           className="hidden sm:flex items-center gap-1.5 text-xs text-zinc-400 hover:text-white px-2 py-1 rounded bg-zinc-900 border border-zinc-800 transition-colors"
           title="View on GitHub"
         >
           <Github className="w-3.5 h-3.5" />
-          <span>wifiknight45/visualizerrr</span>
+          <span>wifiknight45/visualizurrr</span>
         </a>
       </div>
 

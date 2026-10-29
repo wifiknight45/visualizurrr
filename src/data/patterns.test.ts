@@ -37,7 +37,7 @@ test('every pattern has unique ID, valid numbering and metadata', () => {
 test('every pattern generates valid non-empty Python code', () => {
   const samplePalette = COLOR_PALETTES[0];
   for (const p of ALL_PATTERNS) {
-    const code = p.pythonCode(p.defaultParameters, samplePalette.name);
+    const code = p.pythonCode(p.defaultParameters, samplePalette);
     assert.ok(typeof code === 'string' && code.length > 20, `Pattern ${p.id} generated invalid python code`);
     assert.ok(code.includes('import') || code.includes('def') || code.includes('print'), `Python code for ${p.id} must contain standard Python syntax`);
   }

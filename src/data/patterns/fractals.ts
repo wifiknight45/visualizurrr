@@ -4,7 +4,7 @@
  */
 
 import { PatternDefinition } from '../../types/visualizer';
-import { samplePaletteRgba } from '../../utils/color';
+import { drawPath, fillCell, strokeCircle } from '../../utils/drawModes';
 
 export const FRACTAL_PATTERNS: PatternDefinition[] = [
   {
@@ -23,9 +23,9 @@ export const FRACTAL_PATTERNS: PatternDefinition[] = [
       { id: 'stepCount', name: 'Trajectory Points', min: 1000, max: 6000, step: 500, defaultValue: 3500 },
     ],
     defaultParameters: { sigma: 10, rho: 28, beta: 2.667, stepCount: 3500 },
-    pythonCode: (params, paletteName) => `"""
+    pythonCode: (params, palette) => `"""
 Lorenz Strange Attractor Visualizer
-Palette: ${paletteName}
+Palette: ${palette.name}
 """
 import numpy as np
 import matplotlib.pyplot as plt
@@ -46,17 +46,17 @@ t = np.linspace(0, 40, ${params.stepCount})
 state0 = [0.1, 0.0, 0.0]
 states = odeint(lorenz, state0, t)
 
-fig = plt.figure(figsize=(10, 8), facecolor='#090a15')
-ax = fig.add_subplot(111, projection='3d', facecolor='#090a15')
-ax.plot(states[:, 0], states[:, 1], states[:, 2], lw=0.6, color='#00f0ff')
+fig = plt.figure(figsize=(10, 8), facecolor='${palette.background}')
+ax = fig.add_subplot(111, projection='3d', facecolor='${palette.background}')
+ax.plot(states[:, 0], states[:, 1], states[:, 2], lw=0.6, color='${palette.primary}')
 ax.axis('off')
 plt.show()`,
     render: (ctx) => {
-      const { ctx: c, width, height, time, params, sampleColor, mouse } = ctx;
+      const { ctx: c, width, height, time, params, sampleColor, mouse, mode } = ctx;
       const sigma = params.sigma ?? 10;
       const rho = params.rho ?? 28;
       const beta = params.beta ?? 2.667;
-      const stepCount = Math.min(params.stepCount ?? 3500, 4500);
+      const stepCount = Math.min(params.stepCount ?? 3500, 6000);
 
       const rotY = time * 0.4 + (mouse.hasInteracted ? (mouse.x / width - 0.5) * 4 : 0);
       const rotX = 0.35 + (mouse.hasInteracted ? (mouse.y / height - 0.5) * 2 : 0);
@@ -75,10 +75,7 @@ plt.show()`,
       const cosX = Math.cos(rotX);
       const sinX = Math.sin(rotX);
 
-      c.lineWidth = 1.2;
-
-      let prevPx = 0;
-      let prevPy = 0;
+      const pts: { x: number; y: number }[] = [];
 
       for (let i = 0; i < stepCount; i++) {
         const dx = sigma * (y - x) * dt;
@@ -98,17 +95,9 @@ plt.show()`,
         const px = cx + rx * scale * pz;
         const py = cy - ry * scale * pz;
 
-        if (i > 1) {
-          c.beginPath();
-          c.moveTo(prevPx, prevPy);
-          c.lineTo(px, py);
-          const tColor = (i / stepCount + time * 0.05) % 1;
-          c.strokeStyle = sampleColor(tColor);
-          c.stroke();
-        }
-        prevPx = px;
-        prevPy = py;
+        pts.push({ x: px, y: py });
       }
+      drawPath(c, pts, mode, (t) => sampleColor((t + time * 0.05) % 1), 1.2);
     },
   },
   {
@@ -126,9 +115,9 @@ plt.show()`,
       { id: 'colorCycle', name: 'Color Frequency', min: 1, max: 8, step: 0.5, defaultValue: 3 },
     ],
     defaultParameters: { maxIter: 60, zoomLevel: 1.2, colorCycle: 3 },
-    pythonCode: (params, paletteName) => `"""
+    pythonCode: (params, palette) => `"""
 Mandelbrot Fractal Generator
-Palette: ${paletteName}
+Palette: ${palette.name}
 """
 import numpy as np
 import matplotlib.pyplot as plt
@@ -149,12 +138,12 @@ for i in range(max_iter):
     Z[mask] = Z[mask]**2 + C[mask]
     fractal += mask
 
-plt.figure(figsize=(10, 7), facecolor='#090a15')
+plt.figure(figsize=(10, 7), facecolor='${palette.background}')
 plt.imshow(fractal, cmap='plasma', extent=[-2, 1, -1.2, 1.2])
 plt.axis('off')
 plt.show()`,
     render: (ctx) => {
-      const { ctx: c, width, height, time, params, sampleColor } = ctx;
+      const { ctx: c, width, height, time, params, sampleColor, mode } = ctx;
       const maxIter = Math.floor(params.maxIter ?? 60);
       const zoom = (params.zoomLevel ?? 1.2) * (1 + 0.3 * Math.sin(time * 0.4));
       const freq = params.colorCycle ?? 3;
@@ -187,8 +176,7 @@ plt.show()`,
             const nu = Math.log(Math.log(zx * zx + zy * zy) / 2) / Math.log(2);
             const smoothIter = iter + 1 - nu;
             const tColor = ((smoothIter * freq * 0.02) + time * 0.1) % 1;
-            c.fillStyle = sampleColor(tColor);
-            c.fillRect(x * step, y * step, step, step);
+            fillCell(c, x * step, y * step, step, mode, sampleColor(tColor));
           }
         }
       }
@@ -209,9 +197,9 @@ plt.show()`,
       { id: 'speed', name: 'Orbit Frequency', min: 0.2, max: 2, step: 0.1, defaultValue: 0.8 },
     ],
     defaultParameters: { maxIter: 50, radius: 0.7885, speed: 0.8 },
-    pythonCode: (params, paletteName) => `"""
+    pythonCode: (params, palette) => `"""
 Animated Julia Set in Python
-Palette: ${paletteName}
+Palette: ${palette.name}
 """
 import numpy as np
 import matplotlib.pyplot as plt
@@ -237,7 +225,7 @@ plt.imshow(julia, cmap='inferno')
 plt.axis('off')
 plt.show()`,
     render: (ctx) => {
-      const { ctx: c, width, height, time, params, sampleColor, mouse } = ctx;
+      const { ctx: c, width, height, time, params, sampleColor, mouse, mode } = ctx;
       const maxIter = Math.floor(params.maxIter ?? 50);
       const rad = params.radius ?? 0.7885;
       const orbitSpeed = (params.speed ?? 0.8) * 0.3;
@@ -266,8 +254,7 @@ plt.show()`,
 
           if (iter < maxIter) {
             const tColor = (iter / maxIter * 2.5 + time * 0.05) % 1;
-            c.fillStyle = sampleColor(tColor);
-            c.fillRect(x * step, y * step, step, step);
+            fillCell(c, x * step, y * step, step, mode, sampleColor(tColor));
           }
         }
       }
@@ -287,9 +274,9 @@ plt.show()`,
       { id: 'curl', name: 'Wind Wave Curl', min: -0.15, max: 0.15, step: 0.01, defaultValue: 0.04 },
     ],
     defaultParameters: { points: 10000, curl: 0.04 },
-    pythonCode: (params, paletteName) => `"""
+    pythonCode: (params, palette) => `"""
 Barnsley Fern IFS in Python
-Palette: ${paletteName}
+Palette: ${palette.name}
 """
 import random
 import matplotlib.pyplot as plt
@@ -311,13 +298,13 @@ for _ in range(n):
     pts_x.append(x)
     pts_y.append(y)
 
-plt.figure(figsize=(8, 10), facecolor='#090a15')
+plt.figure(figsize=(8, 10), facecolor='${palette.background}')
 plt.scatter(pts_x, pts_y, s=0.2, c=pts_y, cmap='viridis')
 plt.axis('off')
 plt.show()`,
     render: (ctx) => {
-      const { ctx: c, width, height, time, params, sampleColor } = ctx;
-      const count = Math.min(params.points ?? 10000, 16000);
+      const { ctx: c, width, height, time, params, sampleColor, mode } = ctx;
+      const count = Math.min(params.points ?? 10000, 20000);
       const wind = (params.curl ?? 0.04) * Math.sin(time * 2);
 
       let x = 0;
@@ -351,8 +338,7 @@ plt.show()`,
         const px = cx + x * scale;
         const py = cy - y * scale;
 
-        c.fillStyle = sampleColor(y / 10);
-        c.fillRect(px, py, 1.5, 1.5);
+        fillCell(c, px - 0.75, py - 0.75, 1.5, mode, sampleColor(y / 10));
       }
     },
   },
@@ -370,21 +356,21 @@ plt.show()`,
       { id: 'rotSpeed', name: 'Rotation Speed', min: 0, max: 2, step: 0.1, defaultValue: 0.3 },
     ],
     defaultParameters: { depth: 4, rotSpeed: 0.3 },
-    pythonCode: (params, paletteName) => `"""
+    pythonCode: (params, palette) => `"""
 Sierpinski Carpet Generator
-Palette: ${paletteName}
+Palette: ${palette.name}
 """
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 
 depth = ${params.depth}
-fig, ax = plt.subplots(figsize=(8, 8), facecolor='#090a15')
+fig, ax = plt.subplots(figsize=(8, 8), facecolor='${palette.background}')
 
 def carpet(x, y, size, d):
     if d == 0:
         return
     s = size / 3.0
-    rect = patches.Rectangle((x + s, y + s), s, s, color='#38bdf8')
+    rect = patches.Rectangle((x + s, y + s), s, s, color='${palette.primary}')
     ax.add_patch(rect)
     for i in range(3):
         for j in range(3):
@@ -397,7 +383,7 @@ ax.set_ylim(0, 1)
 ax.axis('off')
 plt.show()`,
     render: (ctx) => {
-      const { ctx: c, width, height, time, params, sampleColor } = ctx;
+      const { ctx: c, width, height, time, params, sampleColor, mode } = ctx;
       const depth = Math.min(Math.floor(params.depth ?? 4), 5);
       const rot = time * (params.rotSpeed ?? 0.3);
 
@@ -413,8 +399,7 @@ plt.show()`,
         if (d === 0) return;
         const sub = s / 3;
         // Central hole
-        c.fillStyle = sampleColor(d / depth);
-        c.fillRect(x + sub - s / 2, y + sub - s / 2, sub, sub);
+        fillCell(c, x + sub - s / 2, y + sub - s / 2, sub, mode, sampleColor(d / depth));
 
         for (let i = 0; i < 3; i++) {
           for (let j = 0; j < 3; j++) {
@@ -447,9 +432,9 @@ plt.show()`,
       { id: 'steps', name: 'Ribbon Steps', min: 1000, max: 5000, step: 500, defaultValue: 3000 },
     ],
     defaultParameters: { a: 0.2, b: 0.2, c: 5.7, steps: 3000 },
-    pythonCode: (params, paletteName) => `"""
+    pythonCode: (params, palette) => `"""
 Rössler Chaotic Attractor
-Palette: ${paletteName}
+Palette: ${palette.name}
 """
 import numpy as np
 import matplotlib.pyplot as plt
@@ -466,16 +451,16 @@ def rossler(state, t):
 t = np.linspace(0, 100, ${params.steps})
 states = odeint(rossler, [0.1, 0.0, 0.0], t)
 
-plt.figure(figsize=(9, 9), facecolor='#090a15')
-plt.plot(states[:, 0], states[:, 1], lw=0.6, color='#ff0080')
+plt.figure(figsize=(9, 9), facecolor='${palette.background}')
+plt.plot(states[:, 0], states[:, 1], lw=0.6, color='${palette.accent}')
 plt.axis('off')
 plt.show()`,
     render: (ctx) => {
-      const { ctx: c, width, height, time, params, sampleColor } = ctx;
+      const { ctx: c, width, height, time, params, sampleColor, mode } = ctx;
       const a = params.a ?? 0.2;
       const b = params.b ?? 0.2;
       const cVal = params.c ?? 5.7;
-      const steps = Math.min(params.steps ?? 3000, 4000);
+      const steps = Math.min(params.steps ?? 3000, 5000);
 
       const dt = 0.025;
       let x = 0.1;
@@ -490,8 +475,7 @@ plt.show()`,
       const cosR = Math.cos(rot);
       const sinR = Math.sin(rot);
 
-      c.lineWidth = 1.3;
-      let prevPx = 0, prevPy = 0;
+      const pts: { x: number; y: number }[] = [];
 
       for (let i = 0; i < steps; i++) {
         const dx = (-y - z) * dt;
@@ -507,16 +491,9 @@ plt.show()`,
         const px = cx + rx * scale;
         const py = cy + ry * scale;
 
-        if (i > 2) {
-          c.beginPath();
-          c.moveTo(prevPx, prevPy);
-          c.lineTo(px, py);
-          c.strokeStyle = sampleColor((i / steps + time * 0.1) % 1);
-          c.stroke();
-        }
-        prevPx = px;
-        prevPy = py;
+        pts.push({ x: px, y: py });
       }
+      drawPath(c, pts, mode, (t) => sampleColor((t + time * 0.1) % 1), 1.3);
     },
   },
   {
@@ -533,9 +510,9 @@ plt.show()`,
       { id: 'scale', name: 'Display Scale', min: 1, max: 5, step: 0.2, defaultValue: 3.2 },
     ],
     defaultParameters: { iterations: 12, scale: 3.2 },
-    pythonCode: (params, paletteName) => `"""
+    pythonCode: (params, palette) => `"""
 Heighway Dragon Curve in Python
-Palette: ${paletteName}
+Palette: ${palette.name}
 """
 import turtle
 
@@ -553,7 +530,7 @@ for turn in seq:
     t.right(turn * 90)
 turtle.done()`,
     render: (ctx) => {
-      const { ctx: c, width, height, time, params, sampleColor } = ctx;
+      const { ctx: c, width, height, time, params, sampleColor, mode } = ctx;
       const iters = Math.min(Math.floor(params.iterations ?? 12), 13);
       const stepLen = (params.scale ?? 3.2) * 1.5;
 
@@ -568,23 +545,14 @@ turtle.done()`,
       let curY = height * 0.45;
       let dir = (time * 0.2) % (Math.PI * 2);
 
-      c.lineWidth = 1.4;
-      c.beginPath();
-      c.moveTo(curX, curY);
-
+      const pts: { x: number; y: number }[] = [{ x: curX, y: curY }];
       for (let i = 0; i < turns.length; i++) {
         dir += (turns[i] * Math.PI) / 2;
         curX += Math.cos(dir) * stepLen;
         curY += Math.sin(dir) * stepLen;
-        c.lineTo(curX, curY);
-
-        if (i % 60 === 0 || i === turns.length - 1) {
-          c.strokeStyle = sampleColor((i / turns.length + time * 0.1) % 1);
-          c.stroke();
-          c.beginPath();
-          c.moveTo(curX, curY);
-        }
+        pts.push({ x: curX, y: curY });
       }
+      drawPath(c, pts, mode, (t) => sampleColor((t + time * 0.1) % 1), 1.4);
     },
   },
   {
@@ -601,27 +569,27 @@ turtle.done()`,
       { id: 'pulsing', name: 'Breathing Amplitude', min: 0, max: 0.3, step: 0.05, defaultValue: 0.12 },
     ],
     defaultParameters: { depth: 4, pulsing: 0.12 },
-    pythonCode: (params, paletteName) => `"""
+    pythonCode: (palette) => `"""
 Apollonian Circle Packing
-Palette: ${paletteName}
+Palette: ${palette.name}
 """
 import matplotlib.pyplot as plt
 
-fig, ax = plt.subplots(figsize=(8, 8), facecolor='#090a15')
+fig, ax = plt.subplots(figsize=(8, 8), facecolor='${palette.background}')
 # Curvature k = 1/r
 def draw_circle(x, y, r, color):
     c = plt.Circle((x, y), r, fill=False, color=color, lw=1.2)
     ax.add_patch(c)
 
-draw_circle(0, 0, 1.0, '#38bdf8')
-draw_circle(0, 0.5, 0.5, '#ec4899')
-draw_circle(0, -0.5, 0.5, '#ec4899')
+draw_circle(0, 0, 1.0, '${palette.primary}')
+draw_circle(0, 0.5, 0.5, '${palette.accent}')
+draw_circle(0, -0.5, 0.5, '${palette.accent}')
 ax.set_xlim(-1.1, 1.1)
 ax.set_ylim(-1.1, 1.1)
 ax.axis('off')
 plt.show()`,
     render: (ctx) => {
-      const { ctx: c, width, height, time, params, sampleColor } = ctx;
+      const { ctx: c, width, height, time, params, sampleColor, mode } = ctx;
       const depth = Math.min(Math.floor(params.depth ?? 4), 5);
       const pulse = (params.pulsing ?? 0.12) * Math.sin(time * 2);
 
@@ -631,11 +599,7 @@ plt.show()`,
 
       function drawApollonian(x: number, y: number, r: number, d: number) {
         if (d <= 0 || r < 3) return;
-        c.beginPath();
-        c.arc(x, y, r, 0, Math.PI * 2);
-        c.strokeStyle = sampleColor(d / depth);
-        c.lineWidth = Math.max(1, d * 0.6);
-        c.stroke();
+        strokeCircle(c, x, y, r, mode, sampleColor(d / depth), Math.max(1, d * 0.6));
 
         // 3 interior tangent circles
         const subR = r / (1 + 2 / Math.sqrt(3));

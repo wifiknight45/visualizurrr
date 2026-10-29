@@ -2,9 +2,76 @@
 
 All notable changes made by Muse to this repo are recorded here, newest
 first. Times are America/Los_Angeles. This file is updated after every
-verified stage of work. Nothing is pushed without Aubrey's review first.
+verified stage of work. Aubrey pushes from bash and reviews after pushing.
 
 ## 2026-10-28
+
+### 19:49 PDT — Sprint verified and packaged for delivery
+
+- Full suite on a clean tree: npm ci, strict tsc, 22/22 tests, build,
+  CLI pattern listing, patterns.json drift check, Python byte-compile —
+  all green.
+- Delivery is a patch against main @ da413ad7 (15 files, ~5 MB)
+  verified to apply cleanly to a pristine clone, producing a tree
+  identical to the working copy with the full suite green there too.
+- The 7 new MP3s travel outside the patch: they download from their
+  canonical Free Music Archive file URLs (commands in the handoff
+  notes), and the downloaded files were verified byte-identical
+  (sha256) to the copies tested here.
+
+### 19:47 PDT — Repo tidy, prettier badges, GitHub Pages
+
+- Tidy: removed the stale bun.lock (npm is the canonical toolchain —
+  CI and README both use it; two lockfiles invite drift). Removed the
+  leftover .aistudio/ entry from .gitignore and the AI Studio
+  DISABLE_HMR machinery from vite.config.ts (plain Vite defaults now).
+- README badges restyled: for-the-badge shields with the Python logo
+  and project colours, a Lofi Tracks badge that links to CREDITS.md,
+  plus live CI and GitHub Pages workflow status badges. README also
+  links the live demo URL.
+- GitHub Pages: vite.config.ts takes its base path from VITE_BASE
+  (default '/'); new .github/workflows/pages.yml builds with
+  VITE_BASE=/visualizurrr/ on every push to main and deploys via the
+  official Pages actions (configure-pages with enablement, so the
+  first run tries to switch Pages on; if GitHub still asks, enable it
+  once under Settings → Pages → Source: GitHub Actions).
+- Verified locally under a simulated /visualizurrr/ subpath: the app
+  boots (canvas renders, branding correct, zero failed requests) and
+  all 11 audio tracks load and decode.
+
+### 19:45 PDT — Screenshots regenerated from the real app; README updated
+
+- All six README screenshots re-captured from the current build at
+  1440x900 (headless Chromium against vite preview). The old captures
+  were pre-rename (header read "visualizerrr", GitHub pill pointed at
+  the deleted repo) and pre-fix-pass: 5 render modes, no adaptive-quality
+  HUD, and a playlist modal showing invented track titles with false
+  "procedural audio" copy. The new shots show visualizurrr branding, all
+  six render modes (incl. Matrix), the real 11-track library, honest
+  player copy, and the code drawer.
+- README: lofi.png is now actually referenced (it shipped unreferenced);
+  the soundtrack section describes all 11 tracks (4 original + 7 Holizna);
+  the custom-playlist and git-size notes match reality (~66 MB).
+- Spelling sweep: zero instances of the old "visualizerrr" spelling
+  remain anywhere except this changelog's historical entries.
+
+### 19:43 PDT — Music library: 11 tracks, CC0 verified with sources
+
+- Added 7 lofi tracks by Holizna from Free Music Archive (account
+  HoliznaCC0), each verified on its FMA track page as CC0 1.0 Universal:
+  Roof Tops, August Never Lasts, Ocean Memory, Currents We Used to Know,
+  Tokyo Sunset, One Night In France, Bubbles. Library is now 11 tracks.
+  (The same artist's HoliznaPATREON releases are CC BY-NC-ND and were
+  deliberately not used.)
+- public/audio/CREDITS.md now lists per-track source URLs for the new
+  tracks; the original four remain marked unverified.
+- The three curated playlists now include the new tracks; every library
+  track is reachable from at least one playlist.
+- Audio URLs are base-relative (import.meta.env.BASE_URL) so playback
+  works under a subpath such as GitHub Pages, not only at a domain root.
+- audioEngine test: custom-playlist length now follows the library size
+  instead of hard-coding 4. Verified: tsc clean, 22/22 tests, build OK,
+  and all 11 tracks load and decode in headless Chromium.
 
 ### 17:29 PDT — Stage 5 complete: housekeeping, honesty, accessibility (verified)
 

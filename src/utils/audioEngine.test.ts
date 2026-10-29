@@ -40,7 +40,7 @@ test('default chill playlists contain valid tracks and tempos', () => {
 test('generateCustomPlaylist produces valid structured chill playlists', () => {
   const custom = audioEngine.generateCustomPlaylist('Midnight Rain Study', 'Lo-Fi Chill Hop', 74);
   assert.equal(custom.name, 'Midnight Rain Study');
-  assert.ok(custom.tracks.length === 4);
+  assert.ok(custom.tracks.length === OPEN_SOURCE_LOFI_TRACKS.length);
   assert.ok(custom.tracks[0].bpm >= 60 && custom.tracks[0].bpm <= 90);
   assert.equal(custom.tracks[0].vibe, 'Lo-Fi Chill Hop');
   assert.ok(custom.tracks[0].audioSrc.endsWith('.mp3'));

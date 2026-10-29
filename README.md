@@ -1,12 +1,15 @@
 # visualizurrr
 
-![Python](https://img.shields.io/static/v1?label=Python&message=3.10&color=blue)
-![Patterns](https://img.shields.io/static/v1?label=Patterns&message=68&color=blueviolet)
-![Palettes](https://img.shields.io/static/v1?label=Palettes&message=26&color=magenta)
-![ChillMusic](https://img.shields.io/static/v1?label=ChillMusic&message=OpenSourceLofi&color=emerald)
-![AudioTracks](https://img.shields.io/static/v1?label=Audio&message=CreativeCommons0&color=teal)
-![Platform](https://img.shields.io/static/v1?label=Platform&message=WebAndBash&color=informational)
-![License](https://img.shields.io/static/v1?label=License&message=Apache2&color=green)
+[![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?style=for-the-badge&logo=python&logoColor=ffdd54)](https://www.python.org/)
+[![Patterns](https://img.shields.io/badge/Patterns-68-8A2BE2?style=for-the-badge)](#core-features)
+[![Palettes](https://img.shields.io/badge/Palettes-26-E6007E?style=for-the-badge)](#core-features)
+[![Lofi Tracks](https://img.shields.io/badge/Lofi_Tracks-11_%C2%B7_CC0-009688?style=for-the-badge)](public/audio/CREDITS.md)
+[![Platform](https://img.shields.io/badge/Platform-Web_%2B_Bash-555555?style=for-the-badge&logo=gnubash&logoColor=white)](#how-to-use-via-bash)
+[![License](https://img.shields.io/badge/License-Apache_2.0-3DA639?style=for-the-badge)](LICENSE)
+[![CI](https://github.com/wifiknight45/visualizurrr/actions/workflows/ci.yml/badge.svg)](https://github.com/wifiknight45/visualizurrr/actions/workflows/ci.yml)
+[![GitHub Pages](https://github.com/wifiknight45/visualizurrr/actions/workflows/pages.yml/badge.svg)](https://github.com/wifiknight45/visualizurrr/actions/workflows/pages.yml)
+
+**Live demo:** https://wifiknight45.github.io/visualizurrr/
 
 
 python algorithmic visualizer and open source lofi chill station
@@ -19,20 +22,25 @@ visualizurrr is an interactive mathematical art and algorithmic pattern visualiz
 ![visualizurrr main overview](public/screenshots/desktop.png)
 
 
-visualizurrr bundles four lofi tracks credited as Creative Commons Zero public domain dedications (see public/audio/CREDITS.md for the track-by-track credits and license status). The audio engine connects directly to Web Audio API frequency analysis nodes to drive visual reactivity without synthetic beeps.
+visualizurrr bundles eleven lofi tracks: seven by Holizna whose Creative Commons Zero status was verified track-by-track on Free Music Archive, plus the original four credited as CC0 (their source pages are still unverified — see public/audio/CREDITS.md for per-track credits, sources, and license status). The audio engine connects directly to Web Audio API frequency analysis nodes to drive visual reactivity without synthetic beeps.
 
 1. High Quality Open Source Soundtracks
-The station bundles four authentic studio recordings:
+The station bundles eleven recordings — the original four:
 Track one: Cold Brew Chill by RA. Smooth Rhodes electric piano, mellow acoustic drum groove, and relaxed downtempo swing in E flat major seventh.
 Track two: Night in Kyoto by Avbe. Atmospheric nighttime Japanese chill hop with acoustic guitars and subtle vinyl texture in D minor ninth.
 Track three: Moonshine Vibes by Prigida. Vintage analog tape saturation, warm bass-lines, and golden era hip hop beats in F major seventh.
 Track four: Midnight Study Session by Lofi Records. Deep rain drenched acoustic piano chords with immersive low end warmth in C major seventh.
 
+Plus seven CC0 tracks by Holizna (Free Music Archive, account HoliznaCC0), verified 2026-10-29:
+Roof Tops and August Never Lasts (from Summer Air (Lo-Fi)) — sun-baked, nostalgic summer beats.
+Ocean Memory and Currents We Used to Know (from Ocean Memory (Lo-Fi Chill)) — salt-air, slow-tide instrumentals.
+Tokyo Sunset, One Night In France, and Bubbles (from Public Domain Lofi) — neon dusk, rainy café streets, and bright soda-pop fizz.
+
 2. Controlling Playback
 Click the play button inside the floating music player dock in the upper right corner of the screen. The animated vinyl disc spins while eight frequency spectrum bars dance in direct proportion to real time audio power. Use the skip buttons to move forward or backward between tracks, and use the volume slider or mute button to adjust listening levels.
 
 3. Curated and Custom Chill Playlists
-Clicking the track title or playlist icon opens the playlist modal. Users can select from prepackaged sessions such as Midnight Tokyo Lofi, Cosmic Study Session, or Coffee Shop Vinyl Beats. Users can also create a custom session: enter a session title, pick a vibe mood such as Late Night Focus or Celestial Slumber, and set a target tempo between 58 BPM and 85 BPM. A custom session re-presents the four bundled tracks under your session name with suggested pattern and palette pairings for each track — it does not generate new recordings.
+Clicking the track title or playlist icon opens the playlist modal. Users can select from prepackaged sessions such as Midnight Tokyo Lofi, Cosmic Study Session, or Coffee Shop Vinyl Beats. Users can also create a custom session: enter a session title, pick a vibe mood such as Late Night Focus or Celestial Slumber, and set a target tempo between 58 BPM and 85 BPM. A custom session re-presents the bundled library under your session name with suggested pattern and palette pairings for each track — it does not generate new recordings.
 
 4. Audio Reactive Visual Mechanics
 The Web Audio API analyzer extracts spectral metrics sixty times per second:
@@ -45,6 +53,8 @@ Beat Transients: Percussive strikes trigger luminous bloom flares across the vis
 When the Morph button is active, visualizurrr synchronizes audio and visuals automatically. Each track change morphs the active mathematical pattern and color palette to the pairing suggested for that track. Morphing pauses for a minute after you pick a pattern or palette yourself, so it never overrides your choices.
 
 ![visualizurrr chill playlists](public/screenshots/playlists.png)
+
+![visualizurrr lofi player while a track plays](public/screenshots/lofi.png)
 
 ## how to use via bash
 
@@ -61,7 +71,7 @@ npm run build      # production build in dist/
 Terminal visualizer: see "Running in Bash Terminal" below.
 
 All audio files inside public/audio are tracked and committed in git
-history (~20 MB). Credits and license status: public/audio/CREDITS.md.
+history (~66 MB). Credits and license status: public/audio/CREDITS.md.
 
 ## Core Features
 

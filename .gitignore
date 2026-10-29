@@ -8,8 +8,6 @@ coverage/
 !.env.example
 .playwright-cli/
 
-.aistudio/
-
 # Python bytecode
 __pycache__/
 *.pyc

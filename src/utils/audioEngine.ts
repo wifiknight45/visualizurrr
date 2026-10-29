@@ -5,6 +5,11 @@
 
 import { AudioMetrics, ChillTrack, ChillPlaylist } from '../types/visualizer';
 
+// Base-relative audio URLs: works at a domain root and under a subpath
+// (e.g. GitHub Pages project sites at /visualizurrr/).
+const audioUrl = (file: string): string =>
+  `${(import.meta as unknown as { env?: { BASE_URL?: string } }).env?.BASE_URL ?? '/'}audio/${file}`;
+
 // Curated Open Source Lofi Chill Tracks (Real CC0 & Royalty-Free Studio Recordings)
 export const OPEN_SOURCE_LOFI_TRACKS: ChillTrack[] = [
   {
@@ -16,7 +21,7 @@ export const OPEN_SOURCE_LOFI_TRACKS: ChillTrack[] = [
     vibe: 'Mellow Rhodes & Soft Drums',
     paletteId: 'tokyo-night',
     patternId: 'lorenz-attractor',
-    audioSrc: '/audio/cold_brew_chill.mp3',
+    audioSrc: audioUrl('cold_brew_chill.mp3'),
     license: 'Creative Commons 0 (Public Domain)',
   },
   {
@@ -28,7 +33,7 @@ export const OPEN_SOURCE_LOFI_TRACKS: ChillTrack[] = [
     vibe: 'Tranquil Lantern Vibes',
     paletteId: 'cherry-blossom',
     patternId: 'perlin-flow-field',
-    audioSrc: '/audio/night_in_kyoto.mp3',
+    audioSrc: audioUrl('night_in_kyoto.mp3'),
     license: 'Creative Commons 0 (Public Domain)',
   },
   {
@@ -40,7 +45,7 @@ export const OPEN_SOURCE_LOFI_TRACKS: ChillTrack[] = [
     vibe: 'Vintage Warm Tape Beat',
     paletteId: 'synthwave-84',
     patternId: 'hypotrochoid-spirograph',
-    audioSrc: '/audio/moonshine_vibes.mp3',
+    audioSrc: audioUrl('moonshine_vibes.mp3'),
     license: 'Creative Commons 0 (Public Domain)',
   },
   {
@@ -52,7 +57,91 @@ export const OPEN_SOURCE_LOFI_TRACKS: ChillTrack[] = [
     vibe: 'Rainy Room & Deep Focus',
     paletteId: 'celestial-nebula',
     patternId: 'fourier-epicycles',
-    audioSrc: '/audio/lofi_chill_study.mp3',
+    audioSrc: audioUrl('lofi_chill_study.mp3'),
+    license: 'Creative Commons 0 (Public Domain)',
+  },
+  {
+    id: 'track-roof-tops',
+    title: 'Roof Tops',
+    artist: 'Holizna (CC0)',
+    bpm: 76,
+    key: 'A minor',
+    vibe: 'Sun-baked Rooftop Haze',
+    paletteId: 'golden-amber',
+    patternId: 'phyllotaxis-sunflower',
+    audioSrc: audioUrl('roof_tops.mp3'),
+    license: 'Creative Commons 0 (Public Domain)',
+  },
+  {
+    id: 'track-august-never-lasts',
+    title: 'August Never Lasts',
+    artist: 'Holizna (CC0)',
+    bpm: 72,
+    key: 'F major 7',
+    vibe: 'Late-Summer Nostalgia',
+    paletteId: 'sunset-horizon',
+    patternId: 'wave-interference',
+    audioSrc: audioUrl('august_never_lasts.mp3'),
+    license: 'Creative Commons 0 (Public Domain)',
+  },
+  {
+    id: 'track-ocean-memory',
+    title: 'Ocean Memory',
+    artist: 'Holizna (CC0)',
+    bpm: 70,
+    key: 'C major 7',
+    vibe: 'Salt Air & Slow Tides',
+    paletteId: 'deep-coral-reef',
+    patternId: 'jellyfish-pulse',
+    audioSrc: audioUrl('ocean_memory.mp3'),
+    license: 'Creative Commons 0 (Public Domain)',
+  },
+  {
+    id: 'track-currents',
+    title: 'Currents We Used to Know',
+    artist: 'Holizna (CC0)',
+    bpm: 74,
+    key: 'D minor 9',
+    vibe: 'Drifting Nostalgia Currents',
+    paletteId: 'bioluminescence',
+    patternId: 'perlin-flow-field',
+    audioSrc: audioUrl('currents_we_used_to_know.mp3'),
+    license: 'Creative Commons 0 (Public Domain)',
+  },
+  {
+    id: 'track-tokyo-sunset',
+    title: 'Tokyo Sunset',
+    artist: 'Holizna (CC0)',
+    bpm: 78,
+    key: 'Eb major 7',
+    vibe: 'Neon Dusk Over the Bay',
+    paletteId: 'vaporwave-pastel',
+    patternId: 'starfield-warp',
+    audioSrc: audioUrl('tokyo_sunset.mp3'),
+    license: 'Creative Commons 0 (Public Domain)',
+  },
+  {
+    id: 'track-one-night-in-france',
+    title: 'One Night In France',
+    artist: 'Holizna (CC0)',
+    bpm: 68,
+    key: 'G minor 9',
+    vibe: 'Café Windows & Rainy Streets',
+    paletteId: 'copper-patina',
+    patternId: 'double-pendulum',
+    audioSrc: audioUrl('one_night_in_france.mp3'),
+    license: 'Creative Commons 0 (Public Domain)',
+  },
+  {
+    id: 'track-bubbles',
+    title: 'Bubbles',
+    artist: 'Holizna (CC0)',
+    bpm: 80,
+    key: 'C major 7',
+    vibe: 'Bright Soda-Pop Fizz',
+    paletteId: 'rainbow-spectrum',
+    patternId: 'boids-flocking',
+    audioSrc: audioUrl('bubbles.mp3'),
     license: 'Creative Commons 0 (Public Domain)',
   },
 ];
@@ -65,9 +154,11 @@ export const DEFAULT_CHILL_PLAYLISTS: ChillPlaylist[] = [
     description: 'Open source lofi beats with warm jazz keys, gentle vinyl flutter, and downtempo groove',
     tracks: [
       OPEN_SOURCE_LOFI_TRACKS[0],
+      OPEN_SOURCE_LOFI_TRACKS[9],
       OPEN_SOURCE_LOFI_TRACKS[1],
+      OPEN_SOURCE_LOFI_TRACKS[10],
       OPEN_SOURCE_LOFI_TRACKS[2],
-      OPEN_SOURCE_LOFI_TRACKS[3],
+      OPEN_SOURCE_LOFI_TRACKS[4],
     ],
   },
   {
@@ -76,9 +167,11 @@ export const DEFAULT_CHILL_PLAYLISTS: ChillPlaylist[] = [
     description: 'Relaxing ambient acoustic recordings for deep focus, flow states, and generative visuals',
     tracks: [
       OPEN_SOURCE_LOFI_TRACKS[3],
+      OPEN_SOURCE_LOFI_TRACKS[6],
+      OPEN_SOURCE_LOFI_TRACKS[7],
       OPEN_SOURCE_LOFI_TRACKS[0],
+      OPEN_SOURCE_LOFI_TRACKS[5],
       OPEN_SOURCE_LOFI_TRACKS[1],
-      OPEN_SOURCE_LOFI_TRACKS[2],
     ],
   },
   {
@@ -87,9 +180,11 @@ export const DEFAULT_CHILL_PLAYLISTS: ChillPlaylist[] = [
     description: 'Cozy recordings featuring vintage tape warmth, mellow acoustic basslines, and golden hour chords',
     tracks: [
       OPEN_SOURCE_LOFI_TRACKS[2],
+      OPEN_SOURCE_LOFI_TRACKS[8],
       OPEN_SOURCE_LOFI_TRACKS[3],
+      OPEN_SOURCE_LOFI_TRACKS[4],
       OPEN_SOURCE_LOFI_TRACKS[0],
-      OPEN_SOURCE_LOFI_TRACKS[1],
+      OPEN_SOURCE_LOFI_TRACKS[10],
     ],
   },
 ];
